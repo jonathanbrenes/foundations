@@ -6,7 +6,7 @@ This lab covers package management across the three major Linux distribution fam
 
 Each scenario uses a dedicated VM deployed from the templates provided.
 
-- **Estimated time:** 50 minutes.
+- **Estimated time:** 75 minutes.
 - **VM count:** 3 (RHEL 9, Ubuntu 24.04, SLES 15 SP7).
 
 ---

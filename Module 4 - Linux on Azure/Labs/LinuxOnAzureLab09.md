@@ -6,7 +6,7 @@ This lab covers the core components that enable Linux virtual machines to operat
 
 Each scenario uses dedicated VMs deployed from the templates provided below.
 
-- **Estimated time:** 40 minutes.
+- **Estimated time:** 60 minutes.
 - **VM count:** 3 (RHEL 9, Ubuntu 24.04, SLES 15 SP7).
 
 ---
