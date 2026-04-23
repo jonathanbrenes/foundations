@@ -15,17 +15,7 @@ Each scenario uses dedicated VMs deployed from the templates provided below.
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
-### RHEL 9 VM
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25204%2520-%2520Linux%2520on%2520Azure%2FLabs%2FFoundationsLab09RHEL.json)
-
-### Ubuntu 24.04 VM
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25204%2520-%2520Linux%2520on%2520Azure%2FLabs%2FFoundationsLab09Ubuntu.json)
-
-### SLES 15 SP7 VM
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25204%2520-%2520Linux%2520on%2520Azure%2FLabs%2FFoundationsLab09SLES.json)
+[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25204%2520-%2520Linux%2520on%2520Azure%2FLabs%2FFoundationsLab09.json)
 
 ---
 
@@ -54,7 +44,7 @@ After completing this lab, you will be able to:
 - Identify important files related to waagent and extensions.
 - Perform a password reset through the Azure Portal and verify the VMAccess extension.
 - Understand how the Azure Linux VM Agent creates a swap file on the ephemeral disk.
-- Validate if the system has swap space available and enable or disable it through `waagent.conf`.
+- Verify whether the system has swap space available and enable or disable it through `waagent.conf`.
 
 ---
 
@@ -76,7 +66,7 @@ Complete each scenario on the corresponding VMs. Deploy the VMs from the Deploym
 
 ### Scenario 1 — Provisioning Agent in a Linux VM
 
-Since Linux was first supported in Azure, `waagent` handled provisioning. As part of providing more flexibility, `cloud-init` was introduced and is replacing `waagent` as the provisioning agent in recent Linux distributions. `cloud-init` allows you to pass custom values to a virtual machine during provisioning apart from the parameters provided by the Azure platform. However, in some distributions the provisioning is still handled by `waagent`.
+Since Linux was first supported in Azure, `waagent` handled provisioning. To provide more flexibility, `cloud-init` was introduced and is replacing `waagent` as the provisioning agent in recent Linux distributions. `cloud-init` allows you to pass custom values to a virtual machine during provisioning, in addition to the parameters provided by the Azure platform. However, in some distributions provisioning is still handled by `waagent`.
 
 **Deployment:** See the [Deployment](#deployment) section (RHEL 9 VM and Ubuntu 24.04 VM).
 
@@ -90,27 +80,27 @@ Step 1: Connect and switch to root
   ```
 
 Step 2: Check the provisioning agent
-- Check the WALinux Agent configuration file to determine if `waagent` is the provisioning agent.
+- Check the WALinux Agent configuration file to determine whether `waagent` is the provisioning agent.
   ```bash
   grep -i provisioning /etc/waagent.conf # Filter the waagent config file for provisioning-related settings
   ```
-  Inspect the output visually. If `Provisioning.Agent` is set to `auto` or `waagent`, the agent handles provisioning. If it is set to `cloud-init` or provisioning is disabled, `cloud-init` is the provisioning agent.
+  Review the output. If `Provisioning.Agent` is set to `auto` or `waagent`, the agent handles provisioning. If it is set to `cloud-init` or provisioning is disabled, `cloud-init` is the provisioning agent.
 
 Step 3: Check the cloud-init log file
-- If Step 2 indicates `cloud-init` is the provisioning agent, verify that the cloud-init log files exist. They should be created on first boot.
+- If Step 2 indicates `cloud-init` is the provisioning agent, verify that the cloud-init log files exist. These files are created on first boot.
   ```bash
   ls -l /var/log/cloud-init* # List cloud-init log files; their timestamps indicate when provisioning occurred
   ```
 
 Step 4: Check waagent provisioning logs
-- In case the provisioning setting says `auto`, filter the waagent log for provisioning-related entries.
+- If the provisioning setting is `auto`, filter the waagent log for provisioning-related entries.
   ```bash
   grep -i provisioning /var/log/waagent.log # Search for provisioning events in the waagent log
   ```
 
 ### Scenario 2 — WAAgent and Extensions
 
-The Azure Linux VM Agent (`waagent`) manages the lifecycle of extensions, reports health status, and handles platform-level operations. In this scenario you will identify the agent version, check its service status, review its logs, and observe how extensions are deployed.
+The Azure Linux VM Agent (`waagent`) manages the lifecycle of extensions, reports health status, and handles platform-level operations. In this scenario, you will identify the agent version, check its service status, review its logs, and observe how extensions are deployed.
 
 **Deployment:** Uses the same RHEL 9 and Ubuntu 24.04 VMs from Scenario 1.
 
@@ -182,7 +172,7 @@ Step 8: Check the VMAccess extension
   3. Log in to the VM with the new password to verify it works.
 
 Step 9: Check the logs for the extension and the Linux Agent
-- Extension logs are located under `/var/log/azure`. There is a directory for each extension deployed. Review the extension log for the VMAccess extension.
+- Extension logs are located under `/var/log/azure`. A directory exists for each deployed extension. Review the extension log for the VMAccess extension.
   ```bash
   cd /var/log/azure # Navigate to the Azure extensions log directory
   ls -l # List all extension directories
@@ -193,7 +183,7 @@ Step 9: Check the logs for the extension and the Linux Agent
 
 ### Scenario 3 — Swap Management on Azure Linux VMs
 
-In Azure VMs, a temporary (ephemeral) disk — usually mounted at `/mnt/resource` (or `/mnt` on some distributions) — is recommended for temporary storage including swap files. Historically, the Azure Linux Agent (`waagent`) managed swap creation through its configuration file. However, in newer distributions where `cloud-init` is the provisioning agent, swap management through `waagent.conf` is no longer supported. The recommended approach is to create the swap file using a script or `cloud-init` configuration instead.
+In Azure VMs, a temporary (ephemeral) disk — usually mounted at `/mnt/resource` (or `/mnt` on some distributions) — is recommended for temporary storage including swap files. Historically, the Azure Linux Agent (`waagent`) managed swap creation through its configuration file. However, in newer distributions where `cloud-init` is the provisioning agent, swap management through `waagent.conf` is no longer supported. The recommended approach is to configure swap using a per-boot script or a `cloud-init` configuration.
 
 This scenario covers both methods:
 - **Legacy method (Part A):** Using `waagent.conf` — applicable to older distributions where `waagent` handles provisioning.
@@ -224,7 +214,7 @@ Step 3: Determine the provisioning agent
   ```bash
   grep -i "Provisioning.Agent" /etc/waagent.conf # Check which agent handles provisioning
   ```
-  - If `waagent` manages provisioning, you may use **Part A** (legacy method).
+  - If `waagent` manages provisioning, use **Part A** (legacy method).
   - If `cloud-init` manages provisioning (which is the case for RHEL 9, Ubuntu 24.04, and SLES 15 SP7), use **Part B** (modern method).
 
 #### Part A — Legacy method: Enable swap through waagent.conf

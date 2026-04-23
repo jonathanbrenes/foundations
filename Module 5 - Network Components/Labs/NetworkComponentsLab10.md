@@ -2,7 +2,7 @@
 
 ## Title and Scenario
 
-This lab covers Linux networking fundamentals in Azure across three distributions: RHEL, Ubuntu, and SLES. You will work with the `ip` command, cloud-init networking, distribution-specific network managers (NetworkManager, Netplan/systemd-networkd, Wicked), DNS configuration, and network troubleshooting tools including `ss`, `netstat`, SELinux, `firewalld`, and `tcpdump`.
+This lab covers Linux networking fundamentals in Azure across three distributions: RHEL, Ubuntu, and SLES. You will work with the `ip` command, cloud-init networking, distribution-specific network managers (NetworkManager, Netplan/systemd-networkd, and Wicked), DNS configuration, and network troubleshooting tools including `ss`, `netstat`, SELinux, `firewalld`, and `tcpdump`.
 
 - **Estimated time:** 90 minutes.
 - **VM count:** 3 (RHEL 9, Ubuntu 24.04, SLES 15 SP7).
@@ -13,17 +13,11 @@ This lab covers Linux networking fundamentals in Azure across three distribution
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
-### RHEL 9 VM (Scenarios 1, 2, 3, 6)
+### Lab 10 Multi-VM Deployment (Scenarios 1-6)
 
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25205%2520-%2520Network%2520Components%2FLabs%2FFoundationsLab10RHEL.json)
+Deploy a single ARM template that provisions all three VMs (`lab10rhel`, `lab10ubuntu`, and `lab10sles`) and the additional NIC resources used in the lab scenarios.
 
-### Ubuntu 24.04 VM (Scenarios 3, 4)
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25205%2520-%2520Network%2520Components%2FLabs%2FFoundationsLab10Ubuntu.json)
-
-### SLES 15 SP7 VM (Scenarios 3, 5)
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25205%2520-%2520Network%2520Components%2FLabs%2FFoundationsLab10SLES.json)
+[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25205%2520-%2520Network%2520Components%2FLabs%2FFoundationsLab10.json)
 
 ---
 
@@ -47,9 +41,9 @@ This lab covers Linux networking fundamentals in Azure across three distribution
 
 After completing this lab, you will be able to:
 
-- Identify basic network commands like `ip`.
-- Identify cloud-init log files and use them to verify network configuration and current status.
-- Identify how the network configuration is set between cloud-init and each tool: NetworkManager for RHEL, Netplan for Ubuntu, and Wicked for SLES.
+- Use basic network commands such as `ip`.
+- Locate cloud-init log files and use them to verify network configuration and current status.
+- Explain how network configuration is handled between cloud-init and each tool: NetworkManager for RHEL, Netplan for Ubuntu, and Wicked for SLES.
 - Identify the steps to disable cloud-init networking and explain the impact.
 - Implement custom DNS and domain settings.
 - Analyze the status of ports using `ss`/`netstat`.
@@ -72,7 +66,7 @@ After completing this lab, you will be able to:
 
 ## Your Mission
 
-Complete each scenario on the corresponding VMs. Deploy VMs as needed from the Deployment section.
+Complete each scenario on the corresponding VM. Deploy VMs as needed from the Deployment section.
 
 ### Scenario 1 — Basic Network Configuration
 
@@ -174,7 +168,7 @@ Step 1: Connect to the RHEL VM
   sudo -i # Switch to root for full administrative privileges
   ```
 
-Step 2: Verify NetworkManager status
+Step 2: Verify the NetworkManager status
 - Check the status of the NetworkManager systemd unit.
   ```bash
   systemctl -l --no-pager status NetworkManager # Display the full status of NetworkManager without truncation or paging
@@ -274,7 +268,7 @@ Step 12: Review the main cloud-init configuration file
   grep -ri 'network' /etc/cloud/cloud.cfg # Search for lines containing the word network (case-insensitive, recursive)
   ```
 
-  > This may not return any output on SLES. The network management on SLES is hardcoded in cloud-init. Checking the cloud-init logs will confirm the presence of network configuration.
+  > This may not return any output on SLES. Network management on SLES is hardcoded in cloud-init. Checking the cloud-init logs confirms network configuration.
 
 Step 13: Check the traditional network configuration file
 - The file `/etc/sysconfig/network/ifcfg-eth0` is used to configure network settings for `eth0` on SLES. This file was automatically created by cloud-init. **Do not edit it manually.**
@@ -348,7 +342,7 @@ Step 1: Connect to the Ubuntu VM
   sudo -i # Switch to root for full administrative privileges
   ```
 
-Step 2: Disable networking management in cloud-init
+Step 2: Disable network management in cloud-init
 - Create an additional configuration file for cloud-init to disable network management.
   ```bash
   echo "network: {config: disabled}" | tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg # Create a cloud-init drop-in that disables network configuration
@@ -422,7 +416,7 @@ Step 1: Connect to the SLES VM
   sudo -i # Switch to root for full administrative privileges
   ```
 
-Step 2: Change to a custom DNS on the VNet from the Azure Portal
+Step 2: Change the VNet to custom DNS servers in the Azure Portal
 - In the Azure Portal:
   1. Navigate to **Virtual machines** > `lab10sles` > **Network settings**.
   2. Click on the Virtual Network name to open the VNet resource.
@@ -435,7 +429,7 @@ Step 3: Add DNS IP addresses to the VNet
 
   > These are not real DNS servers. After saving, restart the VM from the Azure Portal to pick up the new DNS configuration.
 
-Step 4: Check the DNS servers change
+Step 4: Check the DNS server changes
 - Reconnect to the VM and verify the new DNS servers are configured.
   ```bash
   sudo -i # Switch to root for full administrative privileges
@@ -443,7 +437,7 @@ Step 4: Check the DNS servers change
   ```
 
 Step 5: Set custom search domains
-- The default search domain is `reddog.microsoft.com`. Change this to `microsoft.com`.
+- The default search domain is `reddog.microsoft.com`. Change it to `microsoft.com`.
   ```bash
   echo NETCONFIG_DNS_STATIC_SEARCHLIST="microsoft.com" >> /etc/sysconfig/network/config # Append a static DNS search list entry for microsoft.com
   systemctl restart wicked.service # Restart Wicked to apply the network configuration change
@@ -452,7 +446,7 @@ Step 5: Set custom search domains
 
 ### Scenario 6 — Check Connection for a Web Server
 
-Verify the pre-configured web server, configure the host firewall for HTTP traffic, and capture traffic using `tcpdump`. The RHEL template deploys `httpd` automatically via customData — installing, enabling, and starting the service, and creating a default Hello World page at `/var/www/html/index.html`. An NSG rule for TCP port 80 is also included in the template.
+Verify the pre-configured web server, configure the host firewall for HTTP traffic, and capture traffic using `tcpdump`. The RHEL template deploys `httpd` automatically via customData by installing, enabling, and starting the service and by creating a default Hello World page at `/var/www/html/index.html`. An NSG rule for TCP port 80 is also included in the template.
 
 **Deployment:** Uses the RHEL 9 VM from Scenario 1.
 
@@ -513,7 +507,7 @@ Step 5: Capture traffic for port 80 using tcpdump
 - **Scenario 3:** Understanding the distribution-specific network manager is critical for troubleshooting. RHEL uses NetworkManager (`nmcli`), SLES uses Wicked, and Ubuntu uses Netplan with systemd-networkd as the backend. All three are initially configured by cloud-init.
 - **Scenario 4:** Disabling cloud-init networking and then replacing the NIC demonstrates why cloud-init network management matters. Without it, the Netplan configuration retains the old NIC's MAC address, and the new NIC gets no IP configuration. This is a common support scenario when customers manually manage networking.
 - **Scenario 5:** DNS and search domain changes propagated through the Azure VNet are applied via DHCP on the next lease renewal or reboot. The SLES-specific `NETCONFIG_DNS_STATIC_SEARCHLIST` setting allows customizing the search domain at the OS level.
-- **Scenario 6:** Troubleshooting web server connectivity requires checking multiple layers: the service itself (`httpd`), the port binding (`ss`/`netstat`), the host firewall (`firewalld`), SELinux port contexts, and the Azure NSG. `tcpdump` is the final tool for confirming traffic is reaching or leaving the VM.
+- **Scenario 6:** Troubleshooting web server connectivity requires checking multiple layers: the service itself (`httpd`), port binding (`ss`/`netstat`), the host firewall (`firewalld`), SELinux port contexts, and the Azure NSG. `tcpdump` is the final tool for confirming whether traffic is reaching or leaving the VM.
 
 ---
 
@@ -551,7 +545,7 @@ As you complete this lab, take note of:
 - The distribution-specific network managers: NetworkManager (RHEL), Wicked (SLES), Netplan/systemd-networkd (Ubuntu).
 - How cloud-init configures networking and what happens when you disable it.
 - The multiple layers that must be checked for web server connectivity: service, port binding, host firewall, SELinux, and Azure NSG.
-- The difference between `ss` and `netstat` (both show the same information, but `ss` is the modern replacement).
+- The difference between `ss` and `netstat` (both show similar information, but `ss` is the modern replacement).
 
 ---
 

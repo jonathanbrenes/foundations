@@ -15,17 +15,7 @@ Each scenario uses a dedicated VM deployed from the templates provided.
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
-### RHEL 9 VM (Scenarios 1 and 2)
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25203%2520-%2520Package%2520Management%2FLabs%2FFoundationsLab08RHEL.json)
-
-### Ubuntu 24.04 VM (Scenarios 3 and 4)
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25203%2520-%2520Package%2520Management%2FLabs%2FFoundationsLab08Ubuntu.json)
-
-### SLES 15 SP7 VM (Scenario 5)
-
-[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25203%2520-%2520Package%2520Management%2FLabs%2FFoundationsLab08SLES.json)
+[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25203%2520-%2520Package%2520Management%2FLabs%2FFoundationsLab08.json)
 
 ---
 
@@ -69,7 +59,7 @@ After completing this lab, you will be able to:
 
 ## Your Mission
 
-Complete each scenario on the corresponding VM. Deploy VMs as needed from the Deployment section.
+Complete each scenario on the corresponding VM. Deploy the VMs from the Deployment section before starting.
 
 ### Scenario 1 — Using rpm
 
@@ -146,7 +136,7 @@ Step 10: Clean up the backup
 
 ### Scenario 2 — Using dnf (yum)
 
-`dnf` is the high-level package manager for RPM-based distributions. It resolves dependencies automatically and manages repositories. Starting with RHEL 8, `dnf` replaced `yum` as the default package manager. The `yum` command is still available as an alias for backward compatibility, so both commands produce the same result.
+`dnf` is the high-level package manager for RPM-based distributions. It resolves dependencies automatically and manages repositories. Starting with RHEL 8, `dnf` replaced `yum` as the default package manager. The `yum` command remains available as an alias for backward compatibility, so both commands produce the same result.
 
 **Deployment:** Uses the same RHEL 9 VM from Scenario 1.
 
@@ -161,17 +151,17 @@ Step 1: Connect to the VM
   ```
 
 Step 2: Check for available updates
-- Check if there are available updates for the system.
+- Check for available updates on the system.
   ```bash
   yum update # Check and apply updates; abort with N to continue the lab without applying
   yum check-update # List packages with available updates without applying
   yum list updates # Another way to list available updates
   ```
 
-  > Using the first command, the system will prompt to apply pending updates. Abort with `N` to continue executing the remaining commands.
+  > The first command prompts to apply pending updates. Enter `N` to skip the update and continue with the remaining steps.
 
 Step 3: Update a specific package
-- Update a single package individually.
+- Update a single package.
   ```bash
   yum update bash # Update only the bash package to its latest available version
   ```
@@ -196,31 +186,31 @@ Step 6: Remove a package
   ```
 
 Step 7: Search for a package
-- Find all packages with "bash" in their name or description.
+- Find all packages with `bash` in their name or description.
   ```bash
   yum search bash # Search package names and descriptions for the term bash
   ```
 
 Step 8: List installed and available packages
-- Find all installed and available bash packages.
+- List all installed and available bash packages.
   ```bash
   yum list bash # Show installed and available versions of the bash package
   ```
 
 Step 9: Get package information
-- Get detailed information for the bash package.
+- Display detailed information about the bash package.
   ```bash
   yum info bash # Display detailed metadata for the bash package
   ```
 
 Step 10: Display package dependencies
-- Display the dependencies for the bash package.
+- List the dependencies required by the bash package.
   ```bash
   yum deplist bash # List all dependencies required by the bash package
   ```
 
 Step 11: Test elevated vs. regular user
-- Test commands as both root and a regular user. Observe any differences.
+- Run the same commands as both root and a regular user and observe any differences.
   ```bash
   sudo yum info bash # Run as root using sudo
   yum info bash # Run as the current user (root in this case)
@@ -229,7 +219,7 @@ Step 11: Test elevated vs. regular user
   ```
 
 Step 12: Install yum-utils
-- Install the `yum-utils` package, which provides additional utilities.
+- Install the `yum-utils` package, which provides supplementary utilities such as `yumdownloader`.
   ```bash
   sudo yum install yum-utils -y # Install the yum-utils package which includes yumdownloader and other tools
   ```
@@ -248,7 +238,7 @@ Step 14: Install from a local file
 
 ### Scenario 3 — Using dpkg
 
-`dpkg` is the low-level package manager for Debian-based distributions. Like `rpm`, it operates on individual `.deb` files and the local package database without resolving dependencies.
+`dpkg` is the low-level package manager for Debian-based distributions. Like `rpm`, it operates on individual `.deb` files and the local package database but does not resolve dependencies.
 
 **Deployment:** See the [Deployment](#deployment) section (Ubuntu 24.04 VM).
 
@@ -268,7 +258,7 @@ Step 2: Find which package owns a file
   ```
 
 Step 3: Show package information
-- List information about the `sosreport` package and all files it contains.
+- Display information about the `sosreport` package and list all files it contains.
   ```bash
   dpkg -l sosreport # Show package status and version information (-l)
   dpkg -L sosreport # List all files installed by the sosreport package (-L)
@@ -307,19 +297,19 @@ Step 1: Connect to the VM
   ```
 
 Step 2: Update the package index
-- Update the list of available packages from all configured repositories.
+- Refresh the list of available packages from all configured repositories.
   ```bash
   apt-get update # Download the latest package lists from the repositories
   ```
 
 Step 3: Upgrade installed packages
-- Update all installed packages to their latest available versions.
+- Upgrade all installed packages to their latest available versions.
   ```bash
   apt-get upgrade # Upgrade all installed packages; will prompt for confirmation
   ```
 
 Step 4: Remove unneeded packages
-- Remove packages that were installed as dependencies and are no longer required.
+- Remove dependency packages that are no longer required by any installed package.
   ```bash
   apt-get autoremove # Remove orphaned dependency packages that are no longer needed
   ```
@@ -337,7 +327,7 @@ Step 6: Remove a package (keep config)
   ```
 
 Step 7: Reinstall the package
-- Reinstall `nmap` non-interactively.
+- Reinstall the `nmap` package non-interactively.
   ```bash
   apt-get install nmap -y # Reinstall nmap; -y answers yes to all prompts
   ```
@@ -447,14 +437,14 @@ Step 11: Distribution upgrade
   zypper dist-upgrade # Perform a distribution upgrade; may install or remove packages as needed
   ```
 
-  > `zypper update` refreshes installed packages to their latest versions, while `zypper dist-upgrade` also handles dependency changes and can install or remove packages as needed.
+  > `zypper update` upgrades installed packages to their latest versions. `zypper dist-upgrade` additionally handles dependency changes and may install or remove packages as needed.
 
 ---
 
 ## Analytical Guidance
 
 - **Scenario 1:** `rpm` is the foundation of package management on Red Hat systems. Understanding how to query the database and rebuild it is essential for troubleshooting corrupted package databases — a common support case.
-- **Scenario 2:** `dnf`/`yum` adds dependency resolution on top of `rpm`. The ability to download packages without installing them (`yumdownloader`) is useful for air-gapped or restricted environments.
+- **Scenario 2:** `dnf`/`yum` adds dependency resolution on top of `rpm`. Downloading packages without installing them (`yumdownloader`) is useful in air-gapped or restricted environments.
 - **Scenario 3:** `dpkg` is the equivalent of `rpm` for Debian systems. The `-S` (search) and `-L` (list files) flags are the most commonly used in troubleshooting.
 - **Scenario 4:** `apt` adds dependency resolution on top of `dpkg`. Understanding the difference between `remove` (keeps config) and `purge` (deletes config) is critical for clean package removal.
 - **Scenario 5:** `zypper` is the all-in-one tool for SUSE. Its `--non-interactive` flag is essential for scripted/automated deployments.
@@ -492,9 +482,9 @@ As you complete this lab, take note of:
 
 ## What Not To Do
 
-- Do not apply full system updates (`yum update`, `apt-get upgrade`) during the lab unless instructed — this can take significant time and change expected outputs.
+- Do not apply full system updates (`yum update`, `apt-get upgrade`) unless instructed — they can take significant time and alter expected outputs.
 - Do not remove core system packages (e.g., `systemd`, `bash`, `openssh-server`).
-- Do not run `rpm --rebuilddb` on production systems without a confirmed backup of `/var/lib/rpm`.
+- Do not run `rpm --rebuilddb` on production systems without first backing up `/var/lib/rpm`.
 - Do not delete the VMs until all Module 3 labs are complete.
 
 ---
