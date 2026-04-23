@@ -25,7 +25,7 @@
 Step 1: Deploy a SLES VM
 - Using the link below, fill in the required options identified with a `*`. Use this new VM for this lab.
 
-  [![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25206%2520-%2520Storage%2520Components%2FLabs%2FFoundationsLab11SLES.json)
+  [![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25206%2520-%2520Storage%2520Components%2FLabs%2FFoundationsLab11.json)
 
 #### Instructions Lab 11 Scenario 1
 
