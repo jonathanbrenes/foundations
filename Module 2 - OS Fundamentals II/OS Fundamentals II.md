@@ -2,9 +2,9 @@
 
 ## Module Overview
 
-- **Training day:** Day 1 (Part A, 3h) and Day 2 (Part B, 2h)
-- **Planned duration:** 5 hours total
-- **Time breakdown:** ~2h reading and concept primer | ~2.5h lab execution | ~30m knowledge check and completion criteria
+- **Training day:** Day 1 (Part A, 2h) and Day 2 (Part B, 1h)
+- **Planned duration:** 3 hours
+- **Time breakdown:** ~1.5h reading and concept primer | ~1h lab execution (Labs 06-07) | ~30m knowledge check and completion criteria
 - **Required VM(s):** SLES 16, RHEL 10
 - **Prior module required:** Module 1 - OS Fundamentals I
 

@@ -2,9 +2,9 @@
 
 ## Module Overview
 
-- **Training day:** Day 2 (Part A, 3h) and Day 3 (Part B, 1h)
-- **Planned duration:** 4 hours total
-- **Time breakdown:** ~1.5h reading and concept primer | ~2h lab execution | ~30m knowledge check and completion criteria
+- **Training day:** Day 2
+- **Planned duration:** 4 hours
+- **Time breakdown:** ~2h reading and concept primer | ~1.5h lab execution including deployment (Lab 09) | ~30m knowledge check and completion criteria
 - **Required VM(s):** RHEL 9, Ubuntu 24.04, SLES 15 SP7
 - **Prior module required:** Module 3 - Package Management
 

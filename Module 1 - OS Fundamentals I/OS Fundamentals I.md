@@ -3,8 +3,8 @@
 ## Module Overview
 
 - **Training day:** Day 1
-- **Planned duration:** 5+ hours
-- **Time breakdown:** ~1.5h reading and concept primer | ~3.5h lab execution (Labs 01-05) | ~30m knowledge check and completion criteria
+- **Planned duration:** 6 hours
+- **Time breakdown:** ~1.5h reading and concept primer | ~4h lab execution including deployment (Labs 01-05) | ~30m knowledge check and completion criteria
 - **Required VMs:** RHEL 9, RHEL 8.10, RHEL 10, Ubuntu 24.04
 - **Prior module required:** None — this is the starting point.
 

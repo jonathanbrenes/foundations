@@ -4,7 +4,7 @@
 
 - **Training day:** Day 2
 - **Planned duration:** 3 hours
-- **Time breakdown:** ~1h reading and concept primer | ~1.5h lab execution | ~30m knowledge check and completion criteria
+- **Time breakdown:** ~1h reading and concept primer | ~1.5h lab execution including deployment (Lab 08) | ~30m knowledge check and completion criteria
 - **Required VM(s):** RHEL 9, Ubuntu 24.04, SLES 15 SP7
 - **Prior module required:** Module 2 - OS Fundamentals II
 

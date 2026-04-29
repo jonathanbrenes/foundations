@@ -2,9 +2,9 @@
 
 ## Module Overview
 
-- **Training day:** Day 3 (Part A, 3h) and Day 4 (Part B, 1h)
-- **Planned duration:** 4 hours total
-- **Time breakdown:** ~1.5h reading and concept primer | ~2h lab execution | ~30m knowledge check and completion criteria
+- **Training day:** Day 3
+- **Planned duration:** 4 hours
+- **Time breakdown:** ~1.5h reading and concept primer | ~2h lab execution including deployment (Lab 11) | ~30m knowledge check and completion criteria
 - **Required VM(s):** SLES 15 SP7
 - **Prior module required:** Module 5 - Network Components
 

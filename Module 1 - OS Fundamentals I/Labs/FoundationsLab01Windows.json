@@ -124,19 +124,20 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D2s_v3"
+          "vmSize": "Standard_D4s_v5"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftWindowsDesktop",
             "offer": "windows-11",
-            "sku": "win11-23h2-ent",
+            "sku": "win11-25h2-ent",
             "version": "latest"
           },
           "osDisk": {
             "createOption": "FromImage",
+            "diskSizeGB": 256,
             "managedDisk": {
-              "storageAccountType": "StandardSSD_LRS"
+              "storageAccountType": "Premium_LRS"
             }
           },
           "dataDisks": []
