@@ -73,7 +73,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2024-05-01",
-      "name": "lab01rhel-nic1-pip",
+      "name": "lab06sles-nic1-pip",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Standard"
@@ -82,17 +82,17 @@
         "publicIPAllocationMethod": "Static",
         "publicIPAddressVersion": "IPv4",
         "dnsSettings": {
-          "domainNameLabel": "[concat('lab01rhel-nic1', uniqueString(resourceGroup().id))]"
+          "domainNameLabel": "[concat('lab06sles-nic1', uniqueString(resourceGroup().id))]"
         }
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2024-05-01",
-      "name": "lab01rhel-nic1",
+      "name": "lab06sles-nic1",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'lab06sles-nic1-pip')]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
       ],
       "properties": {
@@ -107,7 +107,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "10.1.0.10",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab06sles-nic1-pip')]"
               }
             }
           }
@@ -117,20 +117,20 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
-      "name": "lab01rhel",
+      "name": "lab06sles",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'lab01rhel-nic1')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', 'lab06sles-nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D2s_v3"
+          "vmSize": "Standard_B2s"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "RedHat",
-            "offer": "rhel-raw",
-            "sku": "9-raw",
+            "publisher": "SUSE",
+            "offer": "sles-16-0-x86-64",
+            "sku": "gen1",
             "version": "latest"
           },
           "osDisk": {
@@ -139,37 +139,12 @@
               "storageAccountType": "StandardSSD_LRS"
             }
           },
-          "dataDisks": [
-            {
-              "lun": 0,
-              "createOption": "Empty",
-              "diskSizeGB": 6,
-              "managedDisk": {
-                "storageAccountType": "StandardSSD_LRS"
-              }
-            },
-            {
-              "lun": 1,
-              "createOption": "Empty",
-              "diskSizeGB": 4,
-              "managedDisk": {
-                "storageAccountType": "StandardSSD_LRS"
-              }
-            },
-            {
-              "lun": 2,
-              "createOption": "Empty",
-              "diskSizeGB": 2,
-              "managedDisk": {
-                "storageAccountType": "StandardSSD_LRS"
-              }
-            }
-          ]
+          "dataDisks": []
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'lab01rhel-nic1')]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'lab06sles-nic1')]",
               "properties": {
                 "primary": true
               }
@@ -177,10 +152,10 @@
           ]
         },
         "osProfile": {
-          "computerName": "lab01rhel",
+          "computerName": "lab06sles",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "H4sIAAAAAAAAClNW1E/KzNNPSizO4EpOLFGwsVF3DPKNdwr19HFxDYr38A8OCY539XdTV7CzU9BPLUnWz8gvLinmMjTQM9Qz0DM04MxJTDIwLMpIzeHCqhEAo+OWlGEAAAA="
+          "customData": "H4sIAAAAAAAAClNW1E/KzNNPSizO4EpOLFGwsVF3DPKNdwr19HFxDYr38A8OCY539XdTV7CzU9BPLUnWz8gvLinmMjTQM9Qz0DM04MxJTDIwK85JLebCqhEAjRSRLWEAAAA="
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
@@ -194,7 +169,7 @@
     "vmFqdns": {
       "type": "array",
       "value": [
-        "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')).dnsSettings.fqdn]"
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'lab06sles-nic1-pip')).dnsSettings.fqdn]"
       ]
     }
   }

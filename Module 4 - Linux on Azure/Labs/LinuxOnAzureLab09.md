@@ -2,7 +2,7 @@
 
 ## Title and Scenario
 
-This lab covers the core components that enable Linux virtual machines to operate within the Azure platform. You will work with the Azure Linux VM Agent (waagent), cloud-init provisioning, VM extensions, and swap management on the ephemeral disk. Understanding these components is essential for troubleshooting Linux VMs in Azure.
+This lab covers the core components that allow Linux virtual machines to run in Azure. You will work with the Azure Linux VM Agent (waagent), cloud-init provisioning, VM extensions, and swap management on the ephemeral disk. Understanding these components is essential for troubleshooting Linux VMs in Azure.
 
 Each scenario uses dedicated VMs deployed from the templates provided below.
 
@@ -62,11 +62,11 @@ After completing this lab, you will be able to:
 
 ## Your Mission
 
-Complete each scenario on the corresponding VMs. Deploy the VMs from the Deployment section. Scenarios 1 and 2 should be performed on both the RHEL and Ubuntu VMs to compare behavior across distributions. Scenario 3 focuses on swap management and can be performed on any of the three VMs.
+Complete each scenario on the corresponding VMs. Deploy the VMs from the Deployment section. Perform Scenarios 1 and 2 on both the RHEL and Ubuntu VMs to compare behavior across distributions. Scenario 3 focuses on swap management and can be completed on any of the three VMs.
 
 ### Scenario 1 — Provisioning Agent in a Linux VM
 
-Since Linux was first supported in Azure, `waagent` handled provisioning. To provide more flexibility, `cloud-init` was introduced and is replacing `waagent` as the provisioning agent in recent Linux distributions. `cloud-init` allows you to pass custom values to a virtual machine during provisioning, in addition to the parameters provided by the Azure platform. However, in some distributions provisioning is still handled by `waagent`.
+When Linux support was first introduced in Azure, `waagent` handled provisioning. To provide greater flexibility, `cloud-init` was introduced and is replacing `waagent` as the provisioning agent in newer Linux distributions. `cloud-init` allows you to pass custom values to a virtual machine during provisioning in addition to the parameters provided by the Azure platform. In some distributions, provisioning is still handled by `waagent`.
 
 **Deployment:** See the [Deployment](#deployment) section (RHEL 9 VM and Ubuntu 24.04 VM).
 
@@ -100,7 +100,7 @@ Step 4: Check waagent provisioning logs
 
 ### Scenario 2 — WAAgent and Extensions
 
-The Azure Linux VM Agent (`waagent`) manages the lifecycle of extensions, reports health status, and handles platform-level operations. In this scenario, you will identify the agent version, check its service status, review its logs, and observe how extensions are deployed.
+The Azure Linux VM Agent (`waagent`) manages extension lifecycle, reports health status, and handles platform-level operations. In this scenario, you will identify the agent version, check service status, review logs, and observe extension deployment.
 
 **Deployment:** Uses the same RHEL 9 and Ubuntu 24.04 VMs from Scenario 1.
 
@@ -183,11 +183,11 @@ Step 9: Check the logs for the extension and the Linux Agent
 
 ### Scenario 3 — Swap Management on Azure Linux VMs
 
-In Azure VMs, a temporary (ephemeral) disk — usually mounted at `/mnt/resource` (or `/mnt` on some distributions) — is recommended for temporary storage including swap files. Historically, the Azure Linux Agent (`waagent`) managed swap creation through its configuration file. However, in newer distributions where `cloud-init` is the provisioning agent, swap management through `waagent.conf` is no longer supported. The recommended approach is to configure swap using a per-boot script or a `cloud-init` configuration.
+In Azure VMs, a temporary (ephemeral) disk, usually mounted at `/mnt/resource` (or `/mnt` on some distributions), is recommended for temporary storage including swap files. Historically, the Azure Linux Agent (`waagent`) managed swap creation through its configuration file. In newer distributions where `cloud-init` is the provisioning agent, swap management through `waagent.conf` is no longer supported. The recommended approach is to configure swap using a per-boot script or a `cloud-init` configuration.
 
-This scenario covers both methods:
-- **Legacy method (Part A):** Using `waagent.conf` — applicable to older distributions where `waagent` handles provisioning.
-- **Modern method (Part B):** Using a script on the ephemeral disk — applicable to newer distributions provisioned by `cloud-init`. This is the method documented by Microsoft: [Create a SWAP partition for an Azure Linux VM](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/linux/create-swap-file-linux-vm).
+This scenario includes both methods:
+- **Legacy method (Part A):** Use `waagent.conf`, applicable to older distributions where `waagent` handles provisioning.
+- **Modern method (Part B):** Use a script on the ephemeral disk, applicable to newer distributions provisioned by `cloud-init`. This is the Microsoft-documented method: [Create a SWAP partition for an Azure Linux VM](https://learn.microsoft.com/en-us/troubleshoot/azure/virtual-machines/linux/create-swap-file-linux-vm).
 
 **Deployment:** Uses any of the VMs from Scenario 1 (RHEL, Ubuntu, or SLES).
 
@@ -388,8 +388,8 @@ Step 11B: Validate that swap is disabled
 ## Analytical Guidance
 
 - **Scenario 1:** Identifying the provisioning agent is a foundational troubleshooting step. Many provisioning failures stem from confusion about whether `waagent` or `cloud-init` handles initial setup. The `Provisioning.Agent` setting in `/etc/waagent.conf` is the authoritative source.
-- **Scenario 2:** The Azure Linux Agent is the bridge between the Azure platform and the guest OS. Its health directly affects extension deployment, password resets, and VM health reporting. Knowing where logs live (`/var/log/waagent.log`, `/var/log/azure/`) is critical for diagnosing platform-level issues.
-- **Scenario 3:** Swap management on Azure VMs is distribution-dependent and frequently misconfigured. Historically, `waagent.conf` managed swap creation, but newer distributions using `cloud-init` for provisioning ignore those settings. The modern approach uses a per-boot script placed in `/var/lib/cloud/scripts/per-boot/` to recreate the swap file on every boot. Using the ephemeral disk for swap is the recommended approach because it avoids consuming persistent storage. However, the ephemeral disk is not persistent — data is lost during VM deallocation or host maintenance, which is why the per-boot script pattern is necessary.
+- **Scenario 2:** The Azure Linux Agent is the bridge between the Azure platform and the guest OS. Its health directly affects extension deployment, password resets, and VM health reporting. Knowing where logs are stored (`/var/log/waagent.log`, `/var/log/azure/`) is critical for diagnosing platform-level issues.
+- **Scenario 3:** Swap management on Azure VMs is distribution-dependent and frequently misconfigured. Historically, `waagent.conf` managed swap creation, but newer distributions using `cloud-init` for provisioning ignore those settings. The modern approach uses a per-boot script in `/var/lib/cloud/scripts/per-boot/` to recreate the swap file on every boot. Using the ephemeral disk for swap is recommended because it avoids consuming persistent storage. However, the ephemeral disk is not persistent; data is lost during VM deallocation or host maintenance, which is why the per-boot script pattern is necessary.
 
 ---
 
@@ -440,7 +440,7 @@ As you complete this lab, take note of:
 
 ## Real-World Context
 
-The Azure Linux VM Agent is at the center of most platform-level interactions with a Linux VM. In Azure support, engineers frequently troubleshoot issues such as: extensions failing to deploy (often caused by a stalled or crashed waagent), VMs showing as "not ready" in the portal (health reporting failure), and password resets not taking effect (VMAccess extension failures). Understanding the agent's log locations, service status, and configuration file is the first step in any platform-level Linux troubleshooting workflow. Swap management is another common support topic — customers either run out of memory because swap was never configured, or experience data loss because they placed persistent data on the ephemeral disk.
+The Azure Linux VM Agent is central to most platform-level interactions with a Linux VM. In Azure support, engineers frequently troubleshoot issues such as extensions failing to deploy (often caused by a stalled or crashed waagent), VMs showing as "not ready" in the portal (health reporting failure), and password resets not taking effect (VMAccess extension failures). Understanding the agent's log locations, service status, and configuration file is the first step in any platform-level Linux troubleshooting workflow. Swap management is another common support topic: customers either run out of memory because swap was never configured, or experience data loss because they placed persistent data on the ephemeral disk.
 
 ---
 

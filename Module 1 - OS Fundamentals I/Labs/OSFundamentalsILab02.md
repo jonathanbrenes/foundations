@@ -7,13 +7,17 @@ This lab covers the fundamentals of user and group management on a Linux system.
 This is a guided, foundational (101) lab. All steps are provided with expected commands and validation points.
 
 - **Estimated time:** 30 minutes.
-- **VM count:** 1 (Ubuntu 24.04 LTS from Lab 1).
+- **VM count:** 1 (RHEL 8.10).
 
 ---
 
 ## Deployment
 
-This lab reuses the Ubuntu VM (`lab01ubuntu`) deployed in Lab 1. No additional deployment is required.
+Deploy the dedicated Lab 02 VM using the template below.
+
+[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25201%2520-%2520OS%2520Fundamentals%2520I%2FLabs%2FFoundationsLab02.json)
+
+> This template deploys a RHEL 8.10 VM with password authentication.
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
@@ -21,15 +25,15 @@ This lab reuses the Ubuntu VM (`lab01ubuntu`) deployed in Lab 1. No additional d
 
 ## Skills Required
 
-- Ability to connect to a Linux VM via SSH (covered in Lab 1).
+- Ability to connect to a Linux VM via SSH.
 - Basic familiarity with running commands in a Linux terminal.
 
 ---
 
 ## Recommended Prerequisites
 
-- Lab 1 completed — WSL2 or Cloud Shell configured, SSH key-based authentication working.
-- The Ubuntu VM (`lab01ubuntu`) running and accessible.
+- Lab 1 completed — WSL2 or Cloud Shell configured, Azure CLI available, and SSH connectivity understood.
+- Lab 02 VM deployed and accessible.
 
 ---
 
@@ -50,8 +54,8 @@ After completing this lab, you will be able to:
 
 | Component | Details |
 |---|---|
-| VM | Ubuntu 24.04 LTS (`lab01ubuntu`) from Lab 1 |
-| Access | SSH as `azureuser` with key-based authentication |
+| VM | RHEL 8.10 (`lab02rhel`) |
+| Access | SSH as `azureuser` with password authentication initially |
 | Privilege escalation | `sudo -i` to switch to root |
 
 ---
@@ -62,11 +66,13 @@ Complete all steps in order. You will work as root throughout this lab.
 
 ### Scenario 1 — User and group administration
 
-Connect to the `lab01ubuntu` VM and switch to root before starting.
+Connect to the `lab02rhel` VM and switch to root before starting.
 
 ```bash
-ssh azureuser@<VM_PUBLIC_IP> # Connect to the Ubuntu VM using SSH key-based authentication
+ssh azureuser@<VM_PUBLIC_IP> # Connect to the RHEL VM using SSH
 sudo -i # Switch to the root user for full administrative privileges
+whoami # Confirm current user is root
+id # Confirm root UID/GID context
 ```
 
 #### Instructions
@@ -83,95 +89,117 @@ Step 2: List users through `getent`
   getent passwd # Query the system name service database for all user entries; includes local and external sources
   ```
 
-Step 3: Create users with a loop
-- Using a `for` loop, create four users and retrieve information for each one.
+Step 3: Create users
+- Create users `user01`, `user02`, `user03`, and `user04` using a loop.
   ```bash
-  for user in user01 user02 user03 user04   # loop created
-  do
-    useradd -m $user # Create user
-    getent passwd $user # Retrieve and display user information
-  done
+  for user in user01 user02 user03 user04; do useradd -m "$user"; done
+  for user in user01 user02 user03 user04; do getent passwd "$user"; done
   ```
-
-  In the previous command:
-  - The `for` loop assigns a variable called `user` and iterates over a list of usernames (`user01`, `user02`, `user03`, `user04`).
-  - `useradd -m $user` creates a new user for each iteration. The `-m` flag ensures the home directory is created, which is not the default behavior on all distributions.
-  - `getent passwd $user` retrieves and displays details about the user in the current iteration.
 
 Step 4: Set passwords for the created users
-- Using a similar loop, set a password for all users. Replace `<your-secure-password>` with your own password.
+- Set passwords for each user.
   ```bash
-  for user in user01 user02 user03 user04 # loop created
-  do
-  echo "$user:<your-secure-password>" | chpasswd # echo command will repeat what we have inside the quotes.   Adding the pipe will be executing the next command which is _chpasswd_ to the output.  So with each iteraction, we're changing the password for that iteraction with the contents of the quotes in echo command.
-  done
+  passwd user01 # Set password interactively
+  passwd user02
+  passwd user03
+  passwd user04
+
+  # Non-interactive loop form (RHEL):
+  for user in user01 user02 user03 user04; do echo "MyP@ssW0rd" | passwd --stdin "$user"; done
   ```
 
-  > For batch password changes on Ubuntu and Debian, use `chpasswd`. For individual password changes, `passwd` is recommended — it will prompt interactively.
-
-  ```bash
-  passwd user01 # Change the password for user01 interactively; the system will prompt for the new password twice
-  ```
-
-  > On other distributions, `passwd` can also accept input via the `--stdin` flag.
+  > Use a stronger password than `MyP@ssW0rd` outside lab environments.
 
 Step 5: Enable password authentication for SSH
 - If the system was set up with SSH key authentication, password authentication may be disabled. Enable it so the newly created users can log in.
   ```bash
   sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config # Find and replace the PasswordAuthentication value in the SSH config file; -i edits the file in place
   systemctl restart sshd # Restart the SSH daemon so it reads the updated configuration
+  ssh user01@localhost # Test password login locally as user01
   ```
 
   In the previous commands:
   - `sed` filters the `/etc/ssh/sshd_config` configuration file, changing the line `PasswordAuthentication no` to `PasswordAuthentication yes`.
   - `systemctl restart sshd` restarts the SSH service to apply the configuration change.
 
-Step 6: Check and change user expiration
-- Check the current expiration and password aging information for `user03`.
+Step 6: Set password expiry to 60 days
+- Set maximum password age to 60 days for all four users and verify.
   ```bash
-  chage -l user03 # Display password aging and expiration information for user03
+  for user in user01 user02 user03 user04; do chage -M 60 "$user"; done
+  for user in user01 user02 user03 user04; do chage -l "$user"; done
   ```
 
-- Set the account to expire on a specific date.
-  ```bash
-  chage -E 2026-12-31 user03 # Set the account expiration date; the user will not be able to log in after this date
-  ```
-
-- Verify the change took effect.
-  ```bash
-  chage -l user03 # Confirm the expiration date was updated
-  ```
-
-  > The `chage` command manages password aging and account expiration policies. The `-E` flag sets the account expiration date. This is commonly used in production to enforce temporary access or contractor account policies.
+  > Use `chage -l <username>` to verify each account's max password age.
 
 Step 7: Delete users
-- Delete `user01` and `user02`. Use the `-r` flag with the second user and observe the difference.
+- Remove one user without `-r` and observe that the home directory remains.
   ```bash
-  userdel user01 # Delete user01 but keep the home directory
-  userdel -r user02 # Delete user02 and remove the home directory (-r)
-  ls -l /home # List home directories to observe the difference
+  userdel user01 # Delete account only
+  ls -ld /home/user01 # Home directory still exists
   ```
 
-  > The home directory is kept if the `-r` flag is not used. In the `ls -l` output, the directory `/home/user01` remains but does not belong to any user in the system. The ownership shows the UID and GID of the deleted `user01`.
-
-- Check the latest entries in the groups file.
+Step 8: Delete a user with `-r`
+- Remove another user with `-r` and observe that the home directory is removed.
   ```bash
-  tail -10 /etc/group # Display the last 10 lines of the group file to see recent group entries
+  userdel -r user02 # Delete account and home directory
+  ls -ld /home/user02 # Should report no such file or directory
   ```
 
-  > For each user, a new group was created using the same name. When the users are removed, those groups are removed as well.
-
-Step 8: Create groups and assign users
-- Create two new groups and assign the remaining users to those groups. Check the group membership before and after.
+Step 9: Review existing groups
+- Check group entries and user-related groups.
   ```bash
-  groupadd group01 # Create a new group called group01
-  groupadd group02 # Create a new group called group02
-  groups user03 # Show current group membership for user03 (before change)
-  groups user04 # Show current group membership for user04 (before change)
-  usermod -aG group01 user03 # Append (-a) user03 to the supplementary group (-G) group01
-  usermod -aG group02 user04 # Append (-a) user04 to the supplementary group (-G) group02
-  groups user03 # Show updated group membership for user03 (after change)
-  groups user04 # Show updated group membership for user04 (after change)
+  cat /etc/group # Show all groups
+  getent group # Alternate query via name service
+  ```
+
+Step 10: Create required groups
+- Create the `azure-network` and `azure-identity` groups.
+  ```bash
+  groupadd azure-network
+  groupadd azure-identity
+  ```
+
+Step 11: Recreate deleted users
+- Recreate the users from Step 3 so all four accounts exist again.
+  ```bash
+  for user in user01 user02 user03 user04; do id "$user" >/dev/null 2>&1 || useradd -m "$user"; done
+
+  # If a home directory existed from a prior non--r deletion, fix ownership
+  for user in user01 user02 user03 user04; do [ -d "/home/$user" ] && chown -R "$user:$user" "/home/$user"; done
+  ```
+
+Step 12: Add user01 and user02 to `azure-network`
+- Assign supplementary group membership.
+  ```bash
+  usermod -aG azure-network user01
+  usermod -aG azure-network user02
+  ```
+
+Step 13: Add user03 and user04 to `azure-identity`
+- Assign supplementary group membership.
+  ```bash
+  usermod -aG azure-identity user03
+  usermod -aG azure-identity user04
+  id user01
+  id user02
+  id user03
+  id user04
+  ```
+
+Step 14: Switch to user01 and create a file
+- While root, switch to user01, create `testfile1`, and inspect ownership.
+  ```bash
+  su - user01
+  touch testfile1
+  ls -l testfile1
+  id
+  ```
+
+Step 15: Exit back to root
+- Leave the user01 shell and return to root.
+  ```bash
+  exit
+  whoami
   ```
 
 ---
@@ -179,10 +207,11 @@ Step 8: Create groups and assign users
 ## Analytical Guidance
 
 - **Step 1 vs Step 2:** Both `cat /etc/passwd` and `getent passwd` display user information, but `getent` also queries external sources like LDAP or SSSD. On a local-only system the output is identical.
-- **Step 4:** Understand why `chpasswd` reads from standard input while `passwd` is interactive. In automation and scripting, `chpasswd` is the appropriate tool.
+- **Step 4:** `passwd` is interactive, while `passwd --stdin` is useful for scripted lab execution on RHEL.
 - **Step 5:** Modifying `sshd_config` and restarting the service is a common operational task. Be aware that enabling password authentication reduces security if weak passwords are used.
-- **Step 6:** Account expiration is separate from password expiration. A user whose account is expired cannot log in even with a valid password.
-- **Step 7:** The difference between `userdel` and `userdel -r` is critical. Orphaned home directories with numeric UID/GID ownership are a common finding in security audits.
+- **Step 6:** Password aging with `chage -M 60` enforces rotation. This is different from hard account expiry (`chage -E`).
+- **Step 7/8:** The difference between `userdel` and `userdel -r` is critical. Orphaned home directories with numeric UID/GID ownership are a common finding in security audits.
+- **Step 11:** Recreating a user whose old home directory was preserved may require `chown -R user:user /home/user` before that account can write files.
 
 ---
 
@@ -190,14 +219,18 @@ Step 8: Create groups and assign users
 
 | Step | Expected result |
 |---|---|
-| Users listed | `getent passwd user01` returns user details |
+| Privilege escalation | `whoami` returns `root` after `sudo -i` |
+| Users listed | `getent passwd user01` returns user details after creation |
 | Users created | `ls /home` shows `user01`, `user02`, `user03`, `user04` directories |
-| Passwords set | `ssh user01@localhost` prompts for password and connects |
+| Passwords set | `passwd --stdin` reports successful token updates |
 | SSH password auth | `grep PasswordAuthentication /etc/ssh/sshd_config` shows `yes` |
-| Expiration set | `chage -l user03` shows the configured expiration date |
-| `user01` deleted | `getent passwd user01` returns nothing; `/home/user01` still exists |
-| `user02` deleted with `-r` | `getent passwd user02` returns nothing; `/home/user02` is gone |
-| Groups assigned | `groups user03` shows `user03 group01`; `groups user04` shows `user04 group02` |
+| Local login test | `ssh user01@localhost` accepts password when password auth is enabled |
+| Expiration set | `chage -l user01` (and others) shows max age of 60 days |
+| Non-`-r` deletion | `getent passwd user01` returns nothing; `/home/user01` still exists |
+| `-r` deletion | `getent passwd user02` returns nothing; `/home/user02` is gone |
+| Groups created | `getent group azure-network` and `getent group azure-identity` return entries |
+| Groups assigned | `id user01`/`id user02` include `azure-network`; `id user03`/`id user04` include `azure-identity` |
+| File ownership check | `su - user01` then `ls -l testfile1` shows owner `user01` |
 
 ---
 
@@ -206,16 +239,16 @@ Step 8: Create groups and assign users
 As you complete this lab, take note of:
 
 - The difference between `userdel` and `userdel -r` and the impact on the home directory.
-- How `chpasswd` differs from `passwd` for batch vs. interactive password changes.
+- How `passwd` differs from `passwd --stdin` for interactive vs scripted password changes.
 - The location and format of `/etc/passwd`, `/etc/group`, and `/etc/shadow`.
-- The expiration date set for `user03` and the output of `chage -l`.
+- The 60-day password aging policy shown in `chage -l`.
 
 ---
 
 ## What Not To Do
 
 - Do not use hardcoded passwords in scripts that will be committed to a repository.
-- Do not delete `user03` or `user04` — they will be used in subsequent labs.
+- Do not delete all lab users at the end — keep accounts needed for validation and follow-on exercises.
 - Do not disable SSH key-based authentication while enabling password authentication. Both methods can coexist.
 - Do not delete the VM after this lab.
 
@@ -240,7 +273,7 @@ User and group management is a daily task for Linux system administrators. In pr
   ```
 - Create a user with a specific UID and primary group:
   ```bash
-  useradd -u 2000 -g group01 user05
+  useradd -u 2000 -g azure-network user05
   id user05
   ```
 - Test logging in as `user03` via SSH from your local session to verify password authentication works end to end.

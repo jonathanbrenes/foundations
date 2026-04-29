@@ -73,7 +73,7 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2024-05-01",
-      "name": "lab01rhel-nic1-pip",
+      "name": "lab04rhel-nic1-pip",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Standard"
@@ -82,17 +82,17 @@
         "publicIPAllocationMethod": "Static",
         "publicIPAddressVersion": "IPv4",
         "dnsSettings": {
-          "domainNameLabel": "[concat('lab01rhel-nic1', uniqueString(resourceGroup().id))]"
+          "domainNameLabel": "[concat('lab04rhel-nic1', uniqueString(resourceGroup().id))]"
         }
       }
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2024-05-01",
-      "name": "lab01rhel-nic1",
+      "name": "lab04rhel-nic1",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'lab04rhel-nic1-pip')]",
         "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
       ],
       "properties": {
@@ -107,7 +107,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "10.1.0.10",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab04rhel-nic1-pip')]"
               }
             }
           }
@@ -117,20 +117,20 @@
     {
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2023-03-01",
-      "name": "lab01rhel",
+      "name": "lab04rhel",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', 'lab01rhel-nic1')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', 'lab04rhel-nic1')]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D2s_v3"
+          "vmSize": "Standard_B2s"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "RedHat",
-            "offer": "rhel-raw",
-            "sku": "9-raw",
+            "offer": "RHEL",
+            "sku": "8_10",
             "version": "latest"
           },
           "osDisk": {
@@ -169,7 +169,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'lab01rhel-nic1')]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'lab04rhel-nic1')]",
               "properties": {
                 "primary": true
               }
@@ -177,10 +177,104 @@
           ]
         },
         "osProfile": {
-          "computerName": "lab01rhel",
+          "computerName": "lab04rhel",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "H4sIAAAAAAAAClNW1E/KzNNPSizO4EpOLFGwsVF3DPKNdwr19HFxDYr38A8OCY539XdTV7CzU9BPLUnWz8gvLinmMjTQM9Qz0DM04MxJTDIwLMpIzeHCqhEAo+OWlGEAAAA="
+          "customData": "H4sIAAAAAAAAClNW1E/KzNNPSizO4EpOLFGwsVF3DPKNdwr19HFxDYr38A8OCY539XdTV7CzU9BPLUnWz8gvLinmMjTQM9Qz0DM04MxJTDIwKcpIzYGLGULESpNK80pKubAaBwBGcLFGdwAAAA=="
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "lab04ubuntu-nic1-pip",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('lab04ubuntu-nic1', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-05-01",
+      "name": "lab04ubuntu-nic1",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'lab04ubuntu-nic1-pip')]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+      ],
+      "properties": {
+        "enableAcceleratedNetworking": false,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
+              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.1.0.11",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab04ubuntu-nic1-pip')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2023-03-01",
+      "name": "lab04ubuntu",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', 'lab04ubuntu-nic1')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B2s"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "ubuntu-24_04-lts",
+            "sku": "server-gen1",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'lab04ubuntu-nic1')]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "lab04ubuntu",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "customData": "H4sIAAAAAAAAClNW1E/KzNNPSizO4EpOLFGwsVF3DPKNdwr19HFxDYr38A8OCY539XdTV7CzU9BPLUnWz8gvLinmMjTQM9Qz0DM04MxJTDIwKcpIzYGLGULESpNK80pKubAaBwBGcLFGdwAAAA=="
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
@@ -194,7 +288,8 @@
     "vmFqdns": {
       "type": "array",
       "value": [
-        "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'lab01rhel-nic1-pip')).dnsSettings.fqdn]"
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'lab04rhel-nic1-pip')).dnsSettings.fqdn]",
+        "[reference(resourceId('Microsoft.Network/publicIPAddresses', 'lab04ubuntu-nic1-pip')).dnsSettings.fqdn]"
       ]
     }
   }

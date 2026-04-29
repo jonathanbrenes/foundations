@@ -341,7 +341,7 @@ Step 8: Purge a package (remove config)
   Or equivalently:
 
   ```bash
-  apt-get remove nmap --remove -y # Alternative syntax to remove the package and its config files
+  apt-get remove --purge nmap -y # Alternative syntax to remove the package and its config files
   ```
 
   > Using `autoremove` afterward may be required to clean up leftover dependency packages.

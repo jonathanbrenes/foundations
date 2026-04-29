@@ -7,13 +7,17 @@ This lab covers fundamental file and directory operations on a Linux system. You
 This is a guided, foundational lab. All steps are provided with expected commands and validation points.
 
 - **Estimated time:** 30 minutes.
-- **VM count:** 1 (Ubuntu 24.04 LTS from Lab 1).
+- **VM count:** 1 (RHEL 9).
 
 ---
 
 ## Deployment
 
-This lab reuses the Ubuntu VM (`lab01ubuntu`) deployed in Lab 1. No additional deployment is required.
+Deploy the dedicated Lab 03 VM using the template below.
+
+[![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25201%2520-%2520OS%2520Fundamentals%2520I%2FLabs%2FFoundationsLab03.json)
+
+> This template deploys a RHEL 9 VM (`lab03rhel`) with password authentication.
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
@@ -21,16 +25,16 @@ This lab reuses the Ubuntu VM (`lab01ubuntu`) deployed in Lab 1. No additional d
 
 ## Skills Required
 
-- Ability to connect to a Linux VM via SSH (covered in Lab 1).
+- Ability to connect to a Linux VM via SSH.
 - Basic familiarity with running commands in a Linux terminal.
 
 ---
 
 ## Recommended Prerequisites
 
-- Lab 1 completed — SSH key-based authentication working.
+- Lab 1 completed — WSL2 or Cloud Shell configured, Azure CLI available, SSH connectivity understood.
 - Lab 2 completed — familiarity with `sudo` and switching to root.
-- The Ubuntu VM (`lab01ubuntu`) running and accessible.
+- Lab 03 VM deployed and accessible.
 
 ---
 
@@ -43,7 +47,7 @@ After completing this lab, you will be able to:
 - Copy, rename, and move files between directories.
 - Execute actions on found files using `find` with `-exec`.
 - Manipulate text files by redirecting, concatenating, and appending outputs into files.
-- Locate files using `updatedb` and `locate`.
+- Locate files quickly using `updatedb` and `locate`.
 
 ---
 
@@ -51,8 +55,8 @@ After completing this lab, you will be able to:
 
 | Component | Details |
 |---|---|
-| VM | Ubuntu 24.04 LTS (`lab01ubuntu`) from Lab 1 |
-| Access | SSH as `azureuser` with key-based authentication |
+| VM | RHEL 9 (`lab03rhel`) |
+| Access | SSH as `azureuser` |
 | Working directory | `~/files-lab` (created during the lab) |
 
 ---
@@ -63,10 +67,10 @@ Complete all steps in order. You will work as `azureuser` for most steps. Some s
 
 ### Scenario 1 — Managing files
 
-Connect to the `lab01ubuntu` VM before starting.
+Connect to the `lab03rhel` VM before starting.
 
 ```bash
-ssh azureuser@<VM_PUBLIC_IP> # Connect to the Ubuntu VM using SSH key-based authentication
+ssh azureuser@<VM_PUBLIC_IP> # Connect to the RHEL 9 VM using SSH
 ```
 
 #### Instructions
@@ -79,6 +83,8 @@ Step 1: Create an empty file inside a new directory
   mkdir files-lab # Create a directory called files-lab
   cd files-lab # Change directory into the newly created files-lab
   touch test.txt # Create an empty file called test.txt
+  # Alternative method using redirection:
+  # echo '' > test.txt
   ls -la # List with details all the files inside the current directory
   ```
 
@@ -141,29 +147,30 @@ Step 6: Execute actions on found files
 Step 7: Find executable files
 - Use the `find` command to display all executable files in the `/usr` directory.
   ```bash
-  sudo find /usr -type f -executable | head -20 # Find regular files (-type f) that are executable and show the first 20 results
+  sudo find /usr -type f -executable # Find regular files (-type f) that are executable in /usr
   ```
 
 Step 8: Delete the lab directory
-- Use `rmdir` and `rm` to remove the directory and its contents.
+- Attempt to remove the lab directory using `rmdir` while in your home directory.
   ```bash
   cd ~ # Change to home directory first
-  rmdir files-lab # Attempt to remove the directory; this will fail because it is not empty
-  rm -r files-lab # Remove the directory and all its contents recursively (-r)
-  ls -l files-lab # Verify the directory no longer exists; this command should produce an error
+  rmdir files-lab # Attempt to remove the directory; this should fail because it is not empty
+  rm -r files-lab # Use recursive removal after the expected rmdir failure
   ```
 
-  > `rmdir` only works if the directory is empty. If the directory contains files, use `rm -r` to delete everything recursively.
+  > `rmdir` only works if the directory is empty. This failure is expected and is part of the lab outcome.
 
-Step 9: Update the filesystem database and use `locate`
-- Run `updatedb` to build the filename database, then use `locate` to find files quickly.
+  > After observing that behavior, use `rm -r` to remove the non-empty `files-lab` directory.
+
+Step 9: Use `updatedb` and `locate`
+- Update the locate database and run quick filename searches.
   ```bash
-  sudo updatedb # Update the filesystem name database used by the locate command
-  locate test-backup.txt # Search the database for files matching the name test-backup.txt
-  locate TEST.txt # Search for files matching TEST.txt
+  sudo updatedb # Refresh the filename database used by locate
+  locate test-backup.txt # Search for the lowercase filename
+  locate TEST.txt # Search for the uppercase filename in home
   ```
 
-  > `locate` searches a pre-built database and is much faster than `find` for name-based searches. The database must be updated with `updatedb` to reflect recent filesystem changes.
+  > `locate` is fast because it reads a database. Run `updatedb` first so recent file changes are included.
 
 ---
 
@@ -173,8 +180,8 @@ Step 9: Update the filesystem database and use `locate`
 - **Step 3:** The `-p` flag in `cp` preserves the original file's permissions, ownership, and timestamps. Without it, the copy inherits the current user's default permissions.
 - **Step 4:** Redirecting `stderr` with `2> /dev/null` is a common pattern to suppress permission denied errors when running `find` as a non-root user.
 - **Step 6:** The `find -exec` pattern is powerful but can be dangerous with destructive commands. Always verify the `find` results without `-exec` first before adding it.
-- **Step 8:** The difference between `rmdir` and `rm -r` is important. `rmdir` is a safe operation that only removes empty directories. `rm -r` is recursive and will delete everything inside the directory without prompting.
-- **Step 9:** `locate` is fast because it queries a database, but the database can be stale. `find` is slower but always searches the live filesystem.
+- **Step 8:** `rmdir` only removes empty directories. Its failure on `files-lab` is expected because the directory still contains files.
+- **Step 9:** `locate` searches a cached database and is usually much faster than `find` for name-only lookups.
 
 ---
 
@@ -189,8 +196,8 @@ Step 9: Update the filesystem database and use `locate`
 | File copied to `/etc` | `ls -l /etc/test-backup.txt` shows the file |
 | Case-insensitive find | `sudo find / -iname test-backup.txt` returns both `/etc/test-backup.txt` and `/etc/test-BACKUP.txt` |
 | Permissions changed | `ls -la /etc/test-BACKUP.txt` shows `rwxrwxrwx` |
-| Directory deleted | `ls ~/files-lab` returns "No such file or directory" |
-| Locate works | `locate test-backup.txt` returns `/etc/test-backup.txt` |
+| `rmdir` behavior observed | `rmdir files-lab` fails because the directory is not empty |
+| Locate results available | `locate test-backup.txt` and `locate TEST.txt` return matching paths |
 
 ---
 
@@ -200,9 +207,9 @@ As you complete this lab, take note of:
 
 - The difference between `>` (overwrite) and `>>` (append) redirection.
 - The behavior of `cp -p` versus `cp` without flags.
-- How `find` searches the live filesystem while `locate` uses a cached database.
 - The syntax of `find -exec` and what `{}` and `\;` mean.
-- Why `rmdir` fails on non-empty directories and when to use `rm -r`.
+- Why `rmdir` fails on non-empty directories.
+- Why `updatedb` should be run before using `locate` for recent changes.
 
 ---
 
@@ -217,7 +224,7 @@ As you complete this lab, take note of:
 
 ## Real-World Context
 
-File navigation, redirection, and the `find` command are among the most commonly used tools in daily Linux administration. In production environments, engineers routinely use redirection to capture command output into log files, `find -exec` to perform bulk operations on files (such as changing permissions or ownership across directory trees), and `locate` for quick file lookups during incident response. Understanding the difference between destructive (`rm -r`) and safe (`rmdir`) directory removal prevents accidental data loss — a critical skill when working on shared systems.
+File navigation, redirection, and the `find` command are among the most commonly used tools in daily Linux administration. In production environments, engineers routinely use redirection to capture command output into log files and `find -exec` to perform bulk operations on files (such as changing permissions or ownership across directory trees). Understanding why `rmdir` fails on non-empty directories is a practical safeguard against accidental deletion mistakes on shared systems.
 
 ---
 

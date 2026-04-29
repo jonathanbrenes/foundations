@@ -1,13 +1,13 @@
-# Lab 1 — WSL2, Azure CLI and Linux VM Deployment
+# Lab 1 — WSL2, Azure CLI and RHEL 9 VM Deployment
 
 ## Title and Scenario
 
-This lab establishes the working environment required for all subsequent modules in the Azure Linux Foundations curriculum. You will set up a local Linux shell using WSL2 and Windows Terminal, install Azure CLI, deploy an Ubuntu Linux VM in Azure, and transition from password-based authentication to SSH key-based authentication.
+This lab establishes the working environment required for all subsequent modules in the Azure Linux Foundations curriculum. You will set up a local Linux shell using WSL2 and Windows Terminal, install Azure CLI, deploy a RHEL 9 VM in Azure, and transition from password-based authentication to SSH key-based authentication.
 
 This is a guided, foundational (101) lab. All steps are provided with expected commands and validation points.
 
 - **Estimated time:** 60 minutes.
-- **VM count:** 1 (Ubuntu 24.04 LTS).
+- **VM count:** 1 (RHEL 9).
 
 ---
 
@@ -23,11 +23,11 @@ Use this deployment only if you cannot install WSL on your work computer.
 
 > If you experience size issues while deploying the VM, try changing the region.
 
-### Ubuntu VM
+### RHEL 9 VM
 
 [![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25201%2520-%2520OS%2520Fundamentals%2520I%2FLabs%2FFoundationsLab01.json)
 
-> This template deploys an Ubuntu 24.04 LTS VM with password authentication. You will generate SSH keys as part of the lab exercises.
+> This template deploys a RHEL 9 VM with password authentication. You will generate SSH keys as part of the lab exercises.
 
 ---
 
@@ -53,7 +53,7 @@ After completing this lab, you will be able to:
 
 - Install WSL2 and Windows Terminal on a Windows machine.
 - Install and authenticate Azure CLI from a Linux shell.
-- Deploy an Ubuntu Linux VM in Azure using an ARM template.
+- Deploy a RHEL 9 VM in Azure using an ARM template.
 - Connect to a remote Linux system using password authentication.
 - Generate an SSH key pair and understand the role of public and private keys.
 - Configure key-based SSH authentication on a remote VM.
@@ -66,7 +66,7 @@ After completing this lab, you will be able to:
 | Component | Details |
 |---|---|
 | Local environment | Windows 11 with WSL2 (Ubuntu 24.04) |
-| Cloud VM | Ubuntu 24.04 LTS (`lab01ubuntu`) |
+| Cloud VM | RHEL 9 (`lab01rhel`) |
 | VM size | Standard_D2s_v3 |
 | Authentication (initial) | Password |
 | Authentication (final) | SSH key pair (RSA 4096-bit) |
@@ -152,16 +152,16 @@ Step 9: Using Azure CLI
   az account set --subscription <SUBSCRIPTION_ID> # Set the active subscription for all subsequent Azure CLI commands
   ```
 
-### Scenario 2 — Deploy and connect to the Ubuntu VM
+### Scenario 2 — Deploy and connect to the RHEL 9 VM
 
-Deploy a single Ubuntu 24.04 LTS VM using the ARM template. The VM is configured with password authentication so you can practice the transition to SSH keys in Scenario 3.
+Deploy a single RHEL 9 VM using the ARM template. The VM is configured with password authentication so you can practice the transition to SSH keys in Scenario 3.
 
-**Deployment:** See the [Deployment](#deployment) section (Ubuntu VM).
+**Deployment:** See the [Deployment](#deployment) section (RHEL 9 VM).
 
 #### Instructions
 
-Step 1: Deploy the Ubuntu VM
-- Click the **Ubuntu VM** deploy button in the Deployment section. Provide a password when prompted.
+Step 1: Deploy the RHEL 9 VM
+- Click the **RHEL 9 VM** deploy button in the Deployment section. Provide a password when prompted.
 
   > Write down the public IP or FQDN assigned to the VM. You will need it in the next steps.
 
@@ -176,7 +176,7 @@ Step 2: Connect to the VM using password
   > If password authentication is denied, verify the NSG allows SSH (22/TCP) inbound from your source.
 
 Step 3: Verify the connection
-- Run a quick command to confirm you are connected to the Ubuntu VM.
+- Run a quick command to confirm you are connected to the RHEL 9 VM.
   ```bash
   hostname # Print the name of the machine you are connected to
   cat /etc/os-release | head -5 # Display the first 5 lines of the OS release file to confirm the distribution
@@ -263,7 +263,7 @@ Step 3: Generate SSH keys in Cloud Shell
 Step 4: Update the VM with the Cloud Shell public key
 - Use Azure CLI to update the VM user with the new public key. This uses the VMAccess extension.
   ```bash
-  az vm user update --resource-group <RESOURCE_GROUP> --name lab01ubuntu --username azureuser --ssh-key-value ~/.ssh/id_rsa.pub # Update the VM user with the new public key using the VMAccess extension
+  az vm user update --resource-group <RESOURCE_GROUP> --name lab01rhel --username azureuser --ssh-key-value ~/.ssh/id_rsa.pub # Update the VM user with the new public key using the VMAccess extension
   ```
 
 Step 5: Connect from Cloud Shell
@@ -290,7 +290,7 @@ Step 5: Connect from Cloud Shell
 | WSL installed | `wsl --list --verbose` shows Ubuntu running |
 | Azure CLI installed | `az version` returns version information |
 | Azure login | `az account show` displays the active subscription |
-| VM deployed | `az vm show --resource-group <RESOURCE_GROUP> --name lab01ubuntu` returns VM details |
+| VM deployed | `az vm show --resource-group <RESOURCE_GROUP> --name lab01rhel` returns VM details |
 | Password SSH | `ssh azureuser@<VM_PUBLIC_IP>` connects with password prompt |
 | SSH key generated | `ls ~/.ssh/id_rsa ~/.ssh/id_rsa.pub` shows both files |
 | Key copied to VM | `ssh azureuser@<VM_PUBLIC_IP>` connects without password prompt |
@@ -302,7 +302,7 @@ Step 5: Connect from Cloud Shell
 
 As you complete this lab, take note of:
 
-- The public IP or FQDN of your Ubuntu VM. You will need it in all subsequent labs.
+- The public IP or FQDN of your RHEL 9 VM. You will need it in all subsequent labs.
 - The location of your SSH keys (`~/.ssh/id_rsa` and `~/.ssh/id_rsa.pub`).
 - Which Azure subscription you selected as default.
 - Whether you used WSL or Cloud Shell — this affects key availability in future labs.
@@ -313,7 +313,7 @@ As you complete this lab, take note of:
 
 - Do not share your SSH private key (`id_rsa`) with anyone or copy it to the VM.
 - Do not skip the password authentication step — experiencing the transition from password to key-based authentication is part of the learning objective.
-- Do not delete the VM after this lab. It will be reused in Lab 2, Lab 3, and Lab 4.
+- Do not delete the VM after this lab. It will be reused in the following Module 1 labs.
 - Do not use `sudo` for SSH key generation — keys should belong to your user, not root.
 
 ---

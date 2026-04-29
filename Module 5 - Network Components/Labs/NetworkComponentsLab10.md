@@ -2,7 +2,7 @@
 
 ## Title and Scenario
 
-This lab covers Linux networking fundamentals in Azure across three distributions: RHEL, Ubuntu, and SLES. You will work with the `ip` command, cloud-init networking, distribution-specific network managers (NetworkManager, Netplan/systemd-networkd, and Wicked), DNS configuration, and network troubleshooting tools including `ss`, `netstat`, SELinux, `firewalld`, and `tcpdump`.
+This lab covers Linux networking fundamentals in Azure across three distributions: RHEL, Ubuntu, and SLES. Topics include the `ip` command, cloud-init networking, distribution-specific network managers (NetworkManager on RHEL, Wicked on SLES, Netplan/systemd-networkd on Ubuntu), DNS configuration, and network troubleshooting tools (`ss`, `netstat`, SELinux, `firewalld`, and `tcpdump`).
 
 - **Estimated time:** 90 minutes.
 - **VM count:** 3 (RHEL 9, Ubuntu 24.04, SLES 15 SP7).
@@ -13,9 +13,7 @@ This lab covers Linux networking fundamentals in Azure across three distribution
 
 > **Warning:** The VMs deployed in these labs allow inbound traffic automatically from the Azure VPN (AzureCloud service tag). Make sure you are connected to the Azure VPN, or add an NSG rule to allow your public IP address before attempting to connect.
 
-### Lab 10 Multi-VM Deployment (Scenarios 1-6)
-
-Deploy a single ARM template that provisions all three VMs (`lab10rhel`, `lab10ubuntu`, and `lab10sles`) and the additional NIC resources used in the lab scenarios.
+Deploy a single ARM template that provisions all three VMs (`lab10rhel`, `lab10ubuntu`, and `lab10sles`) and the additional NIC resources for the lab scenarios.
 
 [![Click to deploy](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjonathanbrenes%2Ffoundations%2Fmain%2FModule%25205%2520-%2520Network%2520Components%2FLabs%2FFoundationsLab10.json)
 
@@ -77,14 +75,14 @@ Using the `ip` command, identify the actual network configuration on the server 
 #### Instructions
 
 Step 1: Connect and switch to root
-- Connect to the `lab10rhel` VM and switch to root.
+- Connect to `lab10rhel` and switch to root.
   ```bash
   ssh azureuser@<RHEL_VM_IP> # Connect to the RHEL VM using SSH
   sudo -i # Switch to root for full administrative privileges
   ```
 
 Step 2: List IP addresses
-- List IP addresses using the `ip` command and understand the output.
+- List all network interfaces and their IP addresses using the `ip` command.
   ```bash
   ip addr show # Show all the network interfaces and their IP addresses
   ```
@@ -93,11 +91,11 @@ Step 2: List IP addresses
 
   | Interface | Details |
   |---|---|
-  | **Loopback (lo)** | The loopback interface is used for internal communication within the host. It always has the IPv4 address `127.0.0.1/8` and the IPv6 address `::1/128`. The `<LOOPBACK,UP,LOWER_UP>` flags indicate it is active. MTU is 65536. |
-  | **Ethernet (eth0)** | The primary Ethernet interface. `<BROADCAST,MULTICAST,UP,LOWER_UP>` indicates it supports broadcast and multicast and is active. MTU is 1500. The `inet` line shows the assigned IPv4 address and subnet mask. The `inet6 fe80::` address is the IPv6 link-local address. The `link/ether` value shows the MAC address. |
+  | **Loopback (lo)** | Loopback interface for internal host communication. IPv4: `127.0.0.1/8`, IPv6: `::1/128`. `<LOOPBACK,UP,LOWER_UP>` indicates it is active. MTU 65536. |
+  | **Ethernet (eth0)** | Primary Ethernet interface. `<BROADCAST,MULTICAST,UP,LOWER_UP>` indicates broadcast, multicast, and active status. MTU 1500. The `inet` line shows IPv4 address and subnet mask. The `inet6 fe80::` is the IPv6 link-local address. `link/ether` shows the MAC address. |
 
 Step 3: View the routing table
-- View the routing table using the `ip` command and understand the output.
+- Display the routing table using the `ip` command.
   ```bash
   ip route show # Displays the routing table with all routes the system uses to determine where to send network traffic
   ```
@@ -106,13 +104,13 @@ Step 3: View the routing table
 
   | Route | Explanation |
   |---|---|
-  | `default via 10.1.0.1 dev eth0` | Default route — all traffic not matching a specific route goes through gateway `10.1.0.1` via `eth0`. `proto dhcp` means it was assigned via DHCP. |
-  | `10.1.0.0/24 dev eth0` | Local subnet route — traffic to the `10.1.0.0/24` network goes directly through `eth0`. `proto kernel` means it was configured automatically by the kernel. `scope link` means it is valid only for directly connected networks. |
-  | `168.63.129.16 via 10.1.0.1 dev eth0` | Route to the Azure wireserver IP used for DHCP, DNS, health probes, and other platform services. [Documentation](https://learn.microsoft.com/azure/virtual-network/what-is-ip-address-168-63-129-16) |
-  | `169.254.169.254 via 10.1.0.1 dev eth0` | Route to the Azure Instance Metadata Service (IMDS). VMs use this to retrieve metadata about their configuration and network settings. [Documentation](https://learn.microsoft.com/azure/virtual-machines/instance-metadata-service?tabs=linux) |
+  | `default via 10.1.0.1 dev eth0` | Default route — traffic not matching a specific route goes through gateway `10.1.0.1`. `proto dhcp` means it was assigned via DHCP. |
+  | `10.1.0.0/24 dev eth0` | Local subnet route — traffic to `10.1.0.0/24` goes directly through `eth0`. `proto kernel` means it was auto-configured. `scope link` means valid for directly connected networks only. |
+  | `168.63.129.16 via 10.1.0.1 dev eth0` | Azure wireserver IP for DHCP, DNS, health probes, and platform services. See [Documentation](https://learn.microsoft.com/azure/virtual-network/what-is-ip-address-168-63-129-16). |
+  | `169.254.169.254 via 10.1.0.1 dev eth0` | Azure Instance Metadata Service (IMDS) for retrieving VM metadata. See [Documentation](https://learn.microsoft.com/azure/virtual-machines/instance-metadata-service?tabs=linux). |
 
 Step 4: Check interface status
-- Check the status of network interfaces using the `ip` command.
+- Display the status and details of all network interfaces.
   ```bash
   ip link show # Displays the status and details of all network interfaces
   ```
@@ -121,42 +119,42 @@ Step 4: Check interface status
 
   | Interface | Key fields |
   |---|---|
-  | **lo** | `state UNKNOWN` — loopback is always active but reports as UNKNOWN. `qdisc noqueue` — no queuing discipline needed. MAC address is all zeros. |
-  | **eth0** | `state UP` — interface is active. `qdisc mq` — multi-queue discipline. The `link/ether` value shows the MAC address assigned by Azure. |
+  | **lo** | `state UNKNOWN` — loopback is always active but reports as UNKNOWN. `qdisc noqueue` — no queuing needed. MAC address is all zeros. |
+  | **eth0** | `state UP` — interface is active. `qdisc mq` — multi-queue discipline. `link/ether` shows the Azure-assigned MAC address. |
 
 ### Scenario 2 — Cloud-init Logs and Network Configuration
 
-Using the cloud-init logs and configuration files, review how the network was configured during provisioning.
+Review cloud-init logs and configuration files to understand how the network was configured during provisioning.
 
 **Deployment:** Uses the same RHEL 9 VM from Scenario 1.
 
 #### Instructions
 
 Step 1: Connect to the VM
-- Continue using the `lab10rhel` VM. If disconnected, reconnect and switch to root.
+- Continue using `lab10rhel`. If disconnected, reconnect and switch to root.
   ```bash
   sudo -i # Switch to root for full administrative privileges
   ```
 
 Step 2: Check the cloud-init.log file
-- Check the cloud-init log file filtered for network-related messages. This is a detailed log with debugging output.
+- Filter the cloud-init log for network-related messages.
   ```bash
   grep -E -i 'network|eth|dhcp' /var/log/cloud-init.log # Search for lines containing network, eth, or dhcp (case-insensitive)
   ```
 
-  > This shows cloud-init making the network configuration on the system. Any potential errors will be logged in this file.
+  > This shows network configuration during provisioning. Any errors appear here.
 
 Step 3: Check the cloud-init-output.log file
-- Check the cloud-init output log, which includes the output from each stage of cloud-init.
+- Display the cloud-init output log, which shows output from each stage of cloud-init initialization.
   ```bash
   cat /var/log/cloud-init-output.log # Display the cloud-init output log containing the output of each initialization stage
   ```
 
-  > This is a smaller file than `cloud-init.log` and shows the high-level output of each stage.
+  > This is a smaller file than `cloud-init.log` and shows high-level output from each stage.
 
 ### Scenario 3 — Network Managers Across Linux Distributions
 
-Each major Linux distribution uses a different network management tool. This scenario explores NetworkManager on RHEL, Wicked on SLES, and Netplan/systemd-networkd on Ubuntu. All three are configured initially by cloud-init during provisioning.
+Each Linux distribution uses a different network management tool. This scenario explores NetworkManager (RHEL), Wicked (SLES), and Netplan/systemd-networkd (Ubuntu). Cloud-init configures all three during initial provisioning.
 
 **Deployment:** See the [Deployment](#deployment) section (all three VMs).
 
@@ -174,7 +172,7 @@ Step 2: Verify the NetworkManager status
   systemctl -l --no-pager status NetworkManager # Display the full status of NetworkManager without truncation or paging
   ```
 
-  > Check that the unit is `enabled`, `active`, and `running`.
+  > Verify that the unit is `enabled`, `active`, and `running`.
 
 Step 3: List NetworkManager connections
 - List all active network connections managed by NetworkManager.
@@ -183,7 +181,7 @@ Step 3: List NetworkManager connections
   ```
 
 Step 4: Review connection details for System eth0
-- Review the connection details for `System eth0`. A filter can be used to extract the most important values during troubleshooting.
+- Display connection details for `System eth0` and filter for key properties.
   ```bash
   nmcli connection show 'System eth0' | grep -E 'GENERAL.STATE|IP4.ADDRESS|IP4.GATEWAY|IP4.ROUTE|IP4.DNS|IP4.DOMAIN|GENERAL.DEVICES|GENERAL.UUID' # Filter key connection properties
   ```
@@ -205,7 +203,7 @@ Step 5: Check the status of cloud-init
   systemctl -l --no-pager status cloud-init # Display the full status of cloud-init without truncation or paging
   ```
 
-  > The unit should be `enabled` and `active`. It will appear as `exited` and not `running` because cloud-init is designed to run only during the initial boot process.
+  > The unit should be `enabled` and `active` with status `exited` (it runs only during initial boot).
 
 Step 6: Review the main cloud-init configuration file
 - Filter the cloud-init configuration file for network-related settings.
@@ -226,7 +224,7 @@ Step 6: Review the main cloud-init configuration file
   > These renderers allow cloud-init to be flexible and compatible with various Linux distributions and their respective network configuration methods.
 
 Step 7: Check the traditional network configuration file
-- The file `/etc/sysconfig/network-scripts/ifcfg-eth0` is used to configure network settings for the `eth0` interface on Red Hat-based distributions. This file was automatically created by cloud-init. **Do not edit it manually.**
+- Display the network configuration file for `eth0` created by cloud-init. **Do not edit this file manually.**
   ```bash
   cat /etc/sysconfig/network-scripts/ifcfg-eth0 # Display the network configuration file for eth0 created by cloud-init
   ```
@@ -246,7 +244,7 @@ Step 9: Check the status of Wicked
   systemctl -l --no-pager status wicked # Display the full status of the Wicked service without truncation or paging
   ```
 
-  > The unit should be `enabled` and `active`. It will appear as `exited` because Wicked configures the network interfaces (lo, eth0) and then exits successfully.
+  > The unit should be `enabled` and `active` with status `exited` (Wicked configures interfaces then exits).
 
 Step 10: Inspect Wicked configuration
 - List network interfaces managed by Wicked.
@@ -268,10 +266,10 @@ Step 12: Review the main cloud-init configuration file
   grep -ri 'network' /etc/cloud/cloud.cfg # Search for lines containing the word network (case-insensitive, recursive)
   ```
 
-  > This may not return any output on SLES. Network management on SLES is hardcoded in cloud-init. Checking the cloud-init logs confirms network configuration.
+  > This may not return results on SLES. Network management on SLES is hardcoded in cloud-init; check cloud-init logs to confirm configuration.
 
 Step 13: Check the traditional network configuration file
-- The file `/etc/sysconfig/network/ifcfg-eth0` is used to configure network settings for `eth0` on SLES. This file was automatically created by cloud-init. **Do not edit it manually.**
+- Display the network configuration file for `eth0` on SLES created by cloud-init. **Do not edit this file manually.**
   ```bash
   cat /etc/sysconfig/network/ifcfg-eth0 # Display the network configuration file for eth0 created by cloud-init
   ```
@@ -322,28 +320,28 @@ Step 18: Verify Netplan configuration
   ls /etc/netplan/ # List all Netplan configuration files
   ```
 
-Step 19: Review the contents of the Netplan configuration file
-- Review the Netplan file created by cloud-init.
+Step 19: Review the Netplan configuration file
+- Display the Netplan file created by cloud-init.
   ```bash
   cat /etc/netplan/50-cloud-init.yaml # Display the Netplan configuration file created by cloud-init
   ```
 
 ### Scenario 4 — Disabling Networking from Cloud-init
 
-This scenario demonstrates the impact of disabling cloud-init networking. You will disable cloud-init network management, replace the NIC on the VM, observe the resulting network failure, and restore connectivity.
+Demonstrate the impact of disabling cloud-init networking. Disable cloud-init network management, replace the VM's NIC, observe the network failure, and restore connectivity.
 
 **Deployment:** Uses the Ubuntu 24.04 VM from Scenario 3.
 
 #### Instructions
 
 Step 1: Connect to the Ubuntu VM
-- Continue using the `lab10ubuntu` VM. If disconnected, reconnect and switch to root.
+- Continue using `lab10ubuntu`. If disconnected, reconnect and switch to root.
   ```bash
   sudo -i # Switch to root for full administrative privileges
   ```
 
 Step 2: Disable network management in cloud-init
-- Create an additional configuration file for cloud-init to disable network management.
+- Create a configuration file to disable cloud-init network management.
   ```bash
   echo "network: {config: disabled}" | tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg # Create a cloud-init drop-in that disables network configuration
   ```
@@ -369,23 +367,23 @@ Step 6: Detach the old NIC
 Step 7: Start the VM
 - Return to the VM overview page and click **Start** to power on the VM with the new NIC attached.
 
-Step 8: Connect to the VM using the Serial Console
-- The VM will not have SSH connectivity because the network is misconfigured. Use the Azure Serial Console:
-  1. In the Azure Portal, navigate to **Virtual machines** > `lab10ubuntu` > **Help** > **Serial console**.
-  2. Log in with the `azureuser` credentials defined during deployment.
+Step 8: Connect via Serial Console
+- The VM will have no SSH connectivity due to misconfigured network. Use the Azure Serial Console:
+  1. Navigate to **Virtual machines** > `lab10ubuntu` > **Help** > **Serial console**.
+  2. Log in with the `azureuser` credentials from deployment.
 
 Step 9: Check current NIC hardware address
-- Compare the MAC address on the system with the one in the Netplan configuration file.
+- Compare the system's MAC address with the one in the Netplan configuration.
   ```bash
   sudo -i # Switch to root for full administrative privileges
   ip addr show # Show the current MAC address assigned to the interface
   cat /etc/netplan/50-cloud-init.yaml # Show the MAC address in the Netplan configuration
   ```
 
-  > Compare both MAC addresses. The MAC address assigned to the new NIC is different from the one configured in the Netplan file created by cloud-init during initial provisioning. As a result, the network has not been configured correctly — no IP address or routes were assigned.
+  > The new NIC's MAC address differs from the one in the Netplan file created during provisioning. The network is not configured — no IP address or routes are assigned.
 
 Step 10: Restore cloud-init network management
-- Remove the configuration file created in Step 2 and reboot to allow cloud-init to reconfigure the network.
+- Remove the configuration file and reboot to allow cloud-init to reconfigure the network.
   ```bash
   cat /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg # Verify the file before removing
   rm /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg # Remove the drop-in file to restore cloud-init networking
@@ -393,18 +391,18 @@ Step 10: Restore cloud-init network management
   ```
 
 Step 11: Verify connectivity is restored
-- After the reboot, connect to the VM via SSH and verify the network configuration.
+- After reboot, connect via SSH and verify the network configuration.
   ```bash
   sudo -i # Switch to root for full administrative privileges
   ip addr show # Show the current IP address and MAC assigned to the interface
   cat /etc/netplan/50-cloud-init.yaml # Show the updated Netplan configuration with the new MAC address
   ```
 
-  > Compare both MAC addresses. This time they should match, and an IP address should be assigned to the interface. Cloud-init detected the new NIC and updated the Netplan configuration automatically.
+  > MAC addresses now match, and the interface has an assigned IP. Cloud-init detected the new NIC and updated Netplan automatically.
 
 ### Scenario 5 — Setting Custom DNS and Domain
 
-Configure custom DNS servers and search domains on the SLES VM through the Azure Portal and the OS.
+Configure custom DNS servers and search domains on the SLES VM via the Azure Portal and OS configuration.
 
 **Deployment:** Uses the SLES 15 SP7 VM from Scenario 3.
 
@@ -416,18 +414,18 @@ Step 1: Connect to the SLES VM
   sudo -i # Switch to root for full administrative privileges
   ```
 
-Step 2: Change the VNet to custom DNS servers in the Azure Portal
+Step 2: Configure custom DNS servers in the Azure Portal
 - In the Azure Portal:
   1. Navigate to **Virtual machines** > `lab10sles` > **Network settings**.
-  2. Click on the Virtual Network name to open the VNet resource.
+  2. Click the Virtual Network name to open the VNet resource.
 
 Step 3: Add DNS IP addresses to the VNet
 - In the VNet resource:
   1. Navigate to **DNS servers**.
-  2. Select **Custom** and add the following dummy DNS values: `1.2.3.4` and `2.3.4.5`.
+  2. Select **Custom** and add: `1.2.3.4` and `2.3.4.5` (test values).
   3. Click **Save**.
 
-  > These are not real DNS servers. After saving, restart the VM from the Azure Portal to pick up the new DNS configuration.
+  > Restart the VM from the Azure Portal to apply the new DNS configuration.
 
 Step 4: Check the DNS server changes
 - Reconnect to the VM and verify the new DNS servers are configured.
@@ -437,7 +435,7 @@ Step 4: Check the DNS server changes
   ```
 
 Step 5: Set custom search domains
-- The default search domain is `reddog.microsoft.com`. Change it to `microsoft.com`.
+- Change the default search domain from `reddog.microsoft.com` to `microsoft.com`.
   ```bash
   echo NETCONFIG_DNS_STATIC_SEARCHLIST="microsoft.com" >> /etc/sysconfig/network/config # Append a static DNS search list entry for microsoft.com
   systemctl restart wicked.service # Restart Wicked to apply the network configuration change
@@ -446,37 +444,37 @@ Step 5: Set custom search domains
 
 ### Scenario 6 — Check Connection for a Web Server
 
-Verify the pre-configured web server, configure the host firewall for HTTP traffic, and capture traffic using `tcpdump`. The RHEL template deploys `httpd` automatically via customData by installing, enabling, and starting the service and by creating a default Hello World page at `/var/www/html/index.html`. An NSG rule for TCP port 80 is also included in the template.
+Verify the pre-configured web server, configure the host firewall for HTTP traffic, and capture traffic using `tcpdump`. The RHEL template deploys `httpd` (with a default "Hello World" page) and includes an NSG rule for TCP port 80.
 
 **Deployment:** Uses the RHEL 9 VM from Scenario 1.
 
 #### Instructions
 
 Step 1: Connect to the RHEL VM
-- Continue using the `lab10rhel` VM. If disconnected, reconnect and switch to root.
+- Continue using `lab10rhel`. If disconnected, reconnect and switch to root.
   ```bash
   sudo -i # Switch to root for full administrative privileges
   ```
 
 Step 2: Verify the Apache web server is pre-installed and running
-- The RHEL VM template pre-installs and configures `httpd` via customData during deployment. Verify the service is running and listening on port 80.
+- Verify that `httpd` is running and listening on port 80.
   ```bash
   systemctl -l --no-pager status httpd # Display the detailed status of the httpd service without truncation or paging
   ss -tuln | grep :80 # List all listening TCP/UDP sockets and filter for port 80
   netstat -tuln | grep :80 # Alternative command to list listening sockets on port 80
   ```
 
-  > The httpd service should already be `enabled`, `active`, and `running`. A default "Hello World" page was created at `/var/www/html/index.html` during provisioning.
+  > The `httpd` service should be `enabled`, `active`, and `running`. A default page is at `/var/www/html/index.html`.
 
 Step 3: Check SELinux
-- SELinux can block traffic to port 80. Verify the SELinux status and the rules for HTTP ports.
+- Verify SELinux status and rules for HTTP ports.
   ```bash
   sestatus # Display the current status of SELinux on the system
   semanage port -l | grep http_port_t # List all SELinux port contexts and filter for HTTP-related port types
   ```
 
 Step 4: Add the HTTP service to firewalld
-- On RHEL, `firewalld` manages the host-level firewall. Check its current state, then add the HTTP service and reload the rules.
+- Add HTTP to the firewall and reload the rules.
   ```bash
   firewall-cmd --state # Display the current state of the firewalld service
   firewall-cmd --list-all # Display all current firewalld settings and rules
@@ -485,15 +483,15 @@ Step 4: Add the HTTP service to firewalld
   firewall-cmd --list-all # Verify the http service now appears in the allowed services list
   ```
 
-  > The ARM template also includes an NSG rule allowing TCP port 80 from AzureCloud, so no manual NSG changes are needed.
+  > The template includes an NSG rule for TCP port 80, so manual NSG changes are not needed.
 
 Step 5: Capture traffic for port 80 using tcpdump
-- Capture traffic on port 80. Access the VM public IP from a web browser. Once the test is done, press `Ctrl+C` to stop the capture.
+- Capture traffic on port 80. Access the VM's public IP from a web browser, then press `Ctrl+C` to stop.
   ```bash
   tcpdump -i any port 80 and not host 168.63.129.16 # Capture traffic on port 80 from all interfaces, excluding Azure wireserver health probes
   ```
 
-  > The parameter `-w` can be used to save the capture to a pcap file for later analysis:
+  > Use `-w` to save to a pcap file:
   ```bash
   tcpdump -w mycapture.pcap -i any port 80 and not host 168.63.129.16 # Save the capture to a pcap file
   ```
@@ -502,12 +500,12 @@ Step 5: Capture traffic for port 80 using tcpdump
 
 ## Analytical Guidance
 
-- **Scenario 1:** The `ip` command is the primary tool for inspecting network configuration on modern Linux systems. Understanding the output of `ip addr show` and `ip route show` is essential for diagnosing connectivity issues. Pay attention to the Azure-specific routes (`168.63.129.16` and `169.254.169.254`) — these are critical for platform services and metadata.
-- **Scenario 2:** Cloud-init logs (`/var/log/cloud-init.log` and `/var/log/cloud-init-output.log`) are the first place to check when network provisioning fails. Errors during the network stage will appear here.
-- **Scenario 3:** Understanding the distribution-specific network manager is critical for troubleshooting. RHEL uses NetworkManager (`nmcli`), SLES uses Wicked, and Ubuntu uses Netplan with systemd-networkd as the backend. All three are initially configured by cloud-init.
-- **Scenario 4:** Disabling cloud-init networking and then replacing the NIC demonstrates why cloud-init network management matters. Without it, the Netplan configuration retains the old NIC's MAC address, and the new NIC gets no IP configuration. This is a common support scenario when customers manually manage networking.
-- **Scenario 5:** DNS and search domain changes propagated through the Azure VNet are applied via DHCP on the next lease renewal or reboot. The SLES-specific `NETCONFIG_DNS_STATIC_SEARCHLIST` setting allows customizing the search domain at the OS level.
-- **Scenario 6:** Troubleshooting web server connectivity requires checking multiple layers: the service itself (`httpd`), port binding (`ss`/`netstat`), the host firewall (`firewalld`), SELinux port contexts, and the Azure NSG. `tcpdump` is the final tool for confirming whether traffic is reaching or leaving the VM.
+- **Scenario 1:** The `ip` command is the primary tool for inspecting network configuration on modern Linux systems. Understand `ip addr show` and `ip route show` to diagnose connectivity issues. Note the Azure-specific routes (`168.63.129.16` and `169.254.169.254`) — they are critical for platform services and metadata.
+- **Scenario 2:** Cloud-init logs (`/var/log/cloud-init.log` and `/var/log/cloud-init-output.log`) are the first place to check when network provisioning fails. Errors during the network stage appear here.
+- **Scenario 3:** Understanding the distribution-specific network manager is essential for troubleshooting. RHEL uses NetworkManager, SLES uses Wicked, and Ubuntu uses Netplan/systemd-networkd. Cloud-init initially configures all three.
+- **Scenario 4:** Disabling cloud-init networking and replacing the NIC demonstrates the importance of cloud-init network management. Without it, Netplan retains the old MAC address, and the new NIC gets no IP. This mirrors a common support case when customers manually manage networking.
+- **Scenario 5:** DNS and search domain changes are applied via DHCP on the next lease renewal or reboot. The SLES `NETCONFIG_DNS_STATIC_SEARCHLIST` setting allows customizing the search domain.
+- **Scenario 6:** Web server connectivity requires checking multiple layers: service status, port binding, host firewall, SELinux, and Azure NSG. `tcpdump` confirms whether traffic reaches or leaves the VM.
 
 ---
 
@@ -538,30 +536,30 @@ Step 5: Capture traffic for port 80 using tcpdump
 
 ## Documentation Expectations
 
-As you complete this lab, take note of:
+As you complete this lab, note:
 
-- The difference between `ip addr show`, `ip link show`, and `ip route show`.
-- The Azure-specific routes (`168.63.129.16` and `169.254.169.254`) and their purpose.
-- The distribution-specific network managers: NetworkManager (RHEL), Wicked (SLES), Netplan/systemd-networkd (Ubuntu).
-- How cloud-init configures networking and what happens when you disable it.
-- The multiple layers that must be checked for web server connectivity: service, port binding, host firewall, SELinux, and Azure NSG.
-- The difference between `ss` and `netstat` (both show similar information, but `ss` is the modern replacement).
+- Differences between `ip addr show`, `ip link show`, and `ip route show`.
+- Purpose of Azure-specific routes (`168.63.129.16` and `169.254.169.254`).
+- Distribution-specific network managers: NetworkManager (RHEL), Wicked (SLES), Netplan/systemd-networkd (Ubuntu).
+- How cloud-init configures networking and the impact of disabling it.
+- Multiple layers for web server connectivity: service, port binding, host firewall, SELinux, and Azure NSG.
+- Difference between `ss` (modern) and `netstat` (legacy).
 
 ---
 
 ## What Not To Do
 
-- Do not manually edit files created by cloud-init (e.g., `ifcfg-eth0`, Netplan YAML) on running VMs — cloud-init may overwrite your changes on the next boot.
-- Do not disable cloud-init networking on production VMs unless you have a clear plan for manual network management.
-- Do not use the dummy DNS servers (`1.2.3.4`, `2.3.4.5`) in production — they are non-functional and will break name resolution.
-- Do not leave `firewalld` rules or NSG rules open to the internet beyond what is needed for testing.
-- Do not delete the VMs until all Module 5 labs are complete.
+- Do not manually edit cloud-init files (`ifcfg-eth0`, Netplan YAML) on running VMs — cloud-init may overwrite your changes on next boot.
+- Do not disable cloud-init networking on production VMs without a clear plan for manual management.
+- Do not use dummy DNS servers (`1.2.3.4`, `2.3.4.5`) in production — they break name resolution.
+- Do not leave `firewalld` or NSG rules open to the internet beyond what is needed for testing.
+- Do not delete VMs until all Module 5 labs are complete.
 
 ---
 
 ## Real-World Context
 
-Network troubleshooting is one of the most common tasks in Azure Linux support. Engineers regularly need to verify that the IP address, routes, and DNS were provisioned correctly by cloud-init, identify whether NetworkManager, Wicked, or Netplan is managing the network, and diagnose connectivity failures caused by mismatched NIC configurations. The Scenario 4 workflow (disabling cloud-init networking and swapping NICs) directly mirrors a common support case where customers disable cloud-init, replace a NIC, and lose connectivity. Scenario 6 demonstrates the multi-layer troubleshooting approach (service → port → firewall → SELinux → NSG → packet capture) that is essential for diagnosing end-to-end connectivity issues in Azure.
+Network troubleshooting is one of the most common tasks in Azure Linux support. Engineers must verify that IP addresses, routes, and DNS were provisioned correctly by cloud-init, identify which network manager is active (NetworkManager, Wicked, or Netplan), and diagnose connectivity failures from mismatched NIC configurations. Scenario 4 mirrors a common support case where customers disable cloud-init, replace a NIC, and lose connectivity. Scenario 6 demonstrates the multi-layer troubleshooting approach (service → port → firewall → SELinux → NSG → packet capture) essential for diagnosing end-to-end connectivity issues in Azure.
 
 ---
 
@@ -573,15 +571,15 @@ Network troubleshooting is one of the most common tasks in Azure Linux support. 
   nmcli connection up 'System eth0' # Reactivate the connection to apply the change
   ip route show # Verify the new route appears in the routing table
   ```
-- Use `netplan try` on the Ubuntu VM to test a network configuration change with automatic rollback:
+- Use `netplan try` on the Ubuntu VM to test configuration with automatic rollback:
   ```bash
   netplan try --timeout 30 # Apply the current Netplan config temporarily; reverts after 30 seconds if not confirmed
   ```
-- Use `tcpdump` to capture DNS queries and identify resolution issues:
+- Use `tcpdump` to capture DNS queries:
   ```bash
   tcpdump -i any port 53 # Capture all DNS traffic on port 53
   ```
-- Check the Azure Instance Metadata Service from inside the VM:
+- Check the Azure Instance Metadata Service from the VM:
   ```bash
   curl -s -H "Metadata:true" "http://169.254.169.254/metadata/instance/network?api-version=2021-02-01" | python3 -m json.tool # Query IMDS for network metadata and format the JSON output
   ```
