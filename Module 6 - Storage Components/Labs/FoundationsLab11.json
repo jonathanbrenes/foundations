@@ -8,6 +8,15 @@
     },
     "adminPassword": {
       "type": "secureString"
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "allowedValues": [
+        "Standard_B2s",
+        "Standard_D2s_v3",
+        "Standard_D2s_v5"
+      ]
     }
   },
   "variables": {
@@ -75,11 +84,8 @@
       "apiVersion": "2024-05-01",
       "name": "lab11sles-nic1-pip",
       "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Standard"
-      },
       "properties": {
-        "publicIPAllocationMethod": "Static",
+        "publicIPAllocationMethod": "Dynamic",
         "publicIPAddressVersion": "IPv4",
         "dnsSettings": {
           "domainNameLabel": "[concat('lab11sles-nic1', uniqueString(resourceGroup().id))]"
@@ -104,8 +110,7 @@
               "subnet": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
               },
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "10.1.0.10",
+              "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'lab11sles-nic1-pip')]"
               }
@@ -124,7 +129,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_D2s_v3"
+          "vmSize": "[parameters('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
