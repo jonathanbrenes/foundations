@@ -55,7 +55,7 @@ After completing this lab, you will be able to:
 | RHEL VM | RHEL 9 (`lab09rhel`) — Scenarios 1, 2, and 3 |
 | Ubuntu VM | Ubuntu 24.04 LTS (`lab09ubuntu`) — Scenarios 1, 2, and 3 |
 | SLES VM | SLES 15 SP7 (`lab09sles`) — Scenarios 1, 2, and 3 |
-| VM size | Standard_D2s_v3 |
+| VM size | Controlled by the deployment template `vmSize` parameter (default: `Standard_B2s`) |
 | Access | SSH as `azureuser` with password authentication |
 
 ---

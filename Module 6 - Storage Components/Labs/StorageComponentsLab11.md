@@ -54,7 +54,7 @@ After completing this lab, you will be able to:
 | Component | Details |
 |---|---|
 | SLES VM | SLES 15 SP7 (`lab11sles`) — All scenarios |
-| VM size | Standard_D2s_v3 |
+| VM size | Controlled by the deployment template `vmSize` parameter (default: `Standard_B2s`) |
 | Data disks | 3 data disks (LUN 0, 1, 2) |
 | Access | SSH as `azureuser` with password authentication |
 

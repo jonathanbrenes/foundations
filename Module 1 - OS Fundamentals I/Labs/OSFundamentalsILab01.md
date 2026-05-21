@@ -67,7 +67,7 @@ After completing this lab, you will be able to:
 |---|---|
 | Local environment | Windows 11 with WSL2 (Ubuntu 24.04) |
 | Cloud VM | RHEL 9 (`lab01rhel`) |
-| VM size | Standard_D2s_v3 |
+| VM size | Controlled by the deployment template `vmSize` parameter (default: `Standard_B2s`) |
 | Authentication (initial) | Password |
 | Authentication (final) | SSH key pair (RSA 4096-bit) |
 | Network | Single NIC, public IP, NSG allowing SSH (22/TCP) from AzureCloud |
